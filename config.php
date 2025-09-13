@@ -5,7 +5,7 @@ require_once 'session-manager.php';
 // Iniciar sesión segura
 SessionManager::start();
 
-// Cargar variables de entorno
+// Función mejorada para cargar variables de entorno
 function loadEnvConfig() {
     $env_file = __DIR__ . '/.env';
     
@@ -13,10 +13,26 @@ function loadEnvConfig() {
         throw new Exception('Archivo .env no encontrado. Copia .env.example a .env y configura tus valores.');
     }
     
-    $env_vars = parse_ini_file($env_file);
+    $env_vars = [];
+    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     
-    if ($env_vars === false) {
-        throw new Exception('Error al cargar el archivo .env');
+    foreach ($lines as $line) {
+        // Ignorar comentarios
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        
+        // Buscar líneas con formato KEY=VALUE
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            
+            // Remover comillas si las hay
+            $value = trim($value, '"\'');
+            
+            $env_vars[$key] = $value;
+        }
     }
     
     return $env_vars;
@@ -38,9 +54,9 @@ try {
 }
 
 // Configuración de Google OAuth
-define('GOOGLE_CLIENT_ID', $env['GOOGLE_CLIENT_ID']);
-define('GOOGLE_CLIENT_SECRET', $env['GOOGLE_CLIENT_SECRET']);  
-define('GOOGLE_REDIRECT_URI', $env['GOOGLE_REDIRECT_URI']);
+define('GOOGLE_CLIENT_ID', $env['GOOGLE_CLIENT_ID'] ?? '1060539804507-ujrlt0dldfr0henc75v0nt5f6ij1l5iq.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET', $env['GOOGLE_CLIENT_SECRET'] ?? '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');  
+define('GOOGLE_REDIRECT_URI', $env['GOOGLE_REDIRECT_URI'] ?? 'https://transformacion.skytel.tech/auth-callback.php');
 
 // Configuración de la aplicación
 define('APP_NAME', $env['APP_NAME'] ?? 'Portal SkyTel');
@@ -89,8 +105,10 @@ function isDomainAllowed($email) {
  */
 function requireAuth() {
     if (!isAuthenticated()) {
-        // Log del intento de acceso no autorizado
-        Utils::logToFile('Unauthorized access attempt from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'WARNING');
+        // Log del intento de acceso no autorizado si Utils está disponible
+        if (class_exists('Utils')) {
+            Utils::logToFile('Unauthorized access attempt from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'WARNING');
+        }
         
         header('Location: login.php');
         exit();
@@ -117,7 +135,9 @@ function requireAdmin() {
     
     if (!isAdmin()) {
         http_response_code(403);
-        Utils::logToFile('Admin access denied for user: ' . $_SESSION['user']['email'], 'WARNING');
+        if (class_exists('Utils')) {
+            Utils::logToFile('Admin access denied for user: ' . $_SESSION['user']['email'], 'WARNING');
+        }
         die('Acceso denegado: Se requieren permisos de administrador');
     }
 }
@@ -133,7 +153,7 @@ function setSecurityHeaders() {
     header('Referrer-Policy: strict-origin-when-cross-origin');
     
     // Solo en producción
-    if (APP_ENV === 'production') {
+    if (defined('APP_ENV') && APP_ENV === 'production') {
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
         
         // CSP básico (ajustar según necesidades)
