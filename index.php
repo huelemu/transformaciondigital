@@ -9,7 +9,7 @@
     <link href="libs/css/google-opensans.css" rel="stylesheet">
     <script src="libs/js/app/jquery.min.js"></script>
 
-    <title>Procesos SkyTel</title>
+    <title>Transformacion Digital - SkyTel</title>
 
     <style>
         body {
