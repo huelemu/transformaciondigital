@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login con Google</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        function handleCredentialResponse(response) {
+            console.log("Token JWT recibido: " + response.credential);
+
+            // Decodificar la información del usuario
+            const data = parseJwt(response.credential);
+            console.log("Información del usuario:", data);
+
+            // Guardar en localStorage o redirigir a otra página
+            localStorage.setItem("user", JSON.stringify(data));
+            window.location.href = "dashboard.html"; // Redirigir a la página principal
+        }
+
+        function parseJwt(token) {
+            let base64Url = token.split('.')[1];
+            let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            let jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+                '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            ).join(''));
+            return JSON.parse(jsonPayload);
+        }
+    </script>
+</head>
+<body>
+    <h2>Iniciar sesión con Google</h2>
+    <div id="g_id_onload"
+         data-client_id="TU_CLIENT_ID_DE_GOOGLE"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-size="large"
+         data-theme="outline"
+         data-text="signin_with"
+         data-shape="rectangular"
+         data-logo_alignment="left">
+    </div>
+</body>
+</html>

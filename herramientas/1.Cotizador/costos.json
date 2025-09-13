@@ -1,0 +1,247 @@
+{
+    "costos": [
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "Omnicanalidad",
+            "cantidad": "",
+            "item": "Inconcert Cloud (por PA operador+staff)",
+            "costoUSD": 35
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "Omnicanalidad",
+            "cantidad": "",
+            "item": "Evamind (por PA operador)",
+            "costoUSD": 25.86
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "Omnicanalidad",
+            "cantidad": "",
+            "item": "Elev - OmniPBX (por PA)",
+            "costoUSD": 20.36
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "Omnicanalidad",
+            "cantidad": "",
+            "item": "Elev - OminiPlus (por user)",
+            "costoUSD": 22.5
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Unico",
+            "categoria": "Plataforma",
+            "tipo_prod": "AgenteVirtual",
+            "cantidad": "",
+            "item": "inConcert Agentes Virtuales (Voz + Texto)",
+            "costoUSD": 400
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "inConcert WhatsApp - coste mensual",
+            "costoUSD": 200
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Unico",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "inConcert WhatsApp - setup (1 vez)",
+            "costoUSD": 200
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "IA",
+            "cantidad": "",
+            "item": "Elev Agente Virtual (Voz + Texto)",
+            "costoUSD": 125
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "Elev WhatsApp - coste mensual",
+            "costoUSD": 89.29
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Unico",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "Elev WhatsApp - setup (1 vez)",
+            "costoUSD": 89.29
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "eLerning",
+            "cantidad": "",
+            "item": "Cosmos (per user)",
+            "costoUSD": 1
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "CRM",
+            "cantidad": "",
+            "item": "2Clix (per user)",
+            "costoUSD": 2
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Email",
+            "cantidad": "",
+            "item": "Email @skytel Starter (per user)",
+            "costoUSD": 3.75
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Email",
+            "cantidad": "",
+            "item": "Email @skytel Enterprise Starter (per user)",
+            "costoUSD": 7.5
+        },
+        {
+            "tipo_costo": "Fijo",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "CiberSecurity",
+            "cantidad": "",
+            "item": "Evertrack (per user)",
+            "costoUSD": 25.86
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Unico",
+            "categoria": "Servicios",
+            "tipo_prod": "Desarrollo",
+            "cantidad": "",
+            "item": "Inconcert - horas desarollo",
+            "costoUSD": 65
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Unico",
+            "categoria": "Servicios",
+            "tipo_prod": "Desarrollo",
+            "cantidad": "",
+            "item": "Elev - horas consultoria \/ desarollo",
+            "costoUSD": 53.57
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "Elev - Conversaci\u00f3n whatsapp",
+            "costoUSD": 0.01
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "IA",
+            "cantidad": "",
+            "item": "inConcert Agentes Virtuales VOZ (Minutos)",
+            "costoUSD": 0.09
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Plataforma",
+            "tipo_prod": "IA",
+            "cantidad": "",
+            "item": "inConcert Agentes Virtuales TEXTO (Conversaciones)",
+            "costoUSD": 0.12
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "WhatsApp - MEX",
+            "costoUSD": 0.0436
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "WhatsApp - PY",
+            "costoUSD": 0.074
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "WhatsApp - UY",
+            "costoUSD": 0.074
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "WhatsApp - ARG",
+            "costoUSD": 0.0618
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "WhatsApp - BR (campanhas de marketing)",
+            "costoUSD": 0.0625
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Whatsapp",
+            "cantidad": "",
+            "item": "WhatsApp - BR (conversas de utilidades)",
+            "costoUSD": 0.008
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Canal",
+            "tipo_prod": "Email",
+            "cantidad": "",
+            "item": "Mails (250.000)",
+            "costoUSD": 30
+        }
+    ]
+}

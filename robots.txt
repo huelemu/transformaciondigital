@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /logs/
+Disallow: /vendor/
+Disallow: /config.php
+Disallow: /auth-callback.php
