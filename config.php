@@ -189,5 +189,4 @@ if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
 // Incluir utilidades globales si están disponibles
 if (file_exists(__DIR__ . '/utils.php')) {
     require_once 'utils.php';
-}
-?>
+}https://transformacion.skytel.tech/debug-oauth-callback.php
