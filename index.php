@@ -6,6 +6,16 @@ require_once 'session-manager.php';
 // Debug: Verificar estado de sesión
 error_log('Index.php loaded - Session debug: ' . json_encode(SessionManager::debug()));
 
+// DEBUG: Verificar estado de autenticación
+error_log("Index.php - Auth check");
+error_log("isAuthenticated(): " . (isAuthenticated() ? 'true' : 'false'));
+error_log("Session data: " . print_r($_SESSION, true));
+if (!isAuthenticated()) {
+    error_log("Not authenticated, redirecting to login");
+    header('Location: login.php');
+    exit();
+}
+
 requireAuth(); // Esto verificará que el usuario esté logueado
 ?>
 <!DOCTYPE html>

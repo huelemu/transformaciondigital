@@ -53,28 +53,31 @@ class SessionManager {
         }
     }
     
-    public static function isValid() {
-        // Verificar que la sesión esté activa
-        if (session_status() === PHP_SESSION_NONE) {
-            error_log('SessionManager: No active session');
+public static function isValid() {
+    // DEBUG: Agregar logs
+    error_log("SessionManager::isValid() called");
+    error_log("Session status: " . session_status());
+    error_log("Session data: " . print_r($_SESSION, true));
+    
+    if (!isset($_SESSION['user'])) {
+        error_log("No user in session");
+        return false;
+    }
+    
+    // Verificar tiempo de vida de la sesión
+    if (isset($_SESSION['user']['login_time'])) {
+        $session_lifetime = 28800; // 8 horas
+        $time_elapsed = time() - $_SESSION['user']['login_time'];
+        error_log("Time elapsed: $time_elapsed seconds");
+        
+        if ($time_elapsed > $session_lifetime) {
+            error_log("Session expired");
             return false;
         }
-        
-        if (!isset($_SESSION['user'])) {
-            error_log('SessionManager: No user data in session');
-            return false;
-        }
-        
-        // Verificar tiempo de vida de la sesión
-        if (isset($_SESSION['user']['login_time'])) {
-            $session_lifetime = 28800; // 8 horas
-            if (time() - $_SESSION['user']['login_time'] > $session_lifetime) {
-                error_log('SessionManager: Session expired for user: ' . $_SESSION['user']['email']);
-                return false;
-            }
-        }
-        
-        return true;
+    }
+    
+    error_log("Session is valid");
+    return true;
     }
     
     public static function extend() {

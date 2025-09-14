@@ -1,17 +1,13 @@
 <?php
-// auth-callback.php - Callback de autenticación
+// auth-callback.php - VERSIÓN CORREGIDA
 require_once 'config.php';
-require_once 'session-manager.php';
+require_once 'session-manager.php';  // ← AGREGAR ESTA LÍNEA
 require_once 'vendor/autoload.php';
 
-// Asegurarse de que la sesión esté iniciada
-SessionManager::start();
-
-// Debug: Log para troubleshooting
-error_log('Auth callback started - Session ID: ' . session_id());
+// Asegurar que no hay salida antes de los headers
+ob_start();
 
 if (!isset($_GET['code'])) {
-    error_log('Auth callback: No code parameter received');
     header('Location: login.php?error=no_code');
     exit();
 }
@@ -26,7 +22,6 @@ try {
     $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
     
     if (isset($token['error'])) {
-        error_log('Auth callback: Token error - ' . $token['error']);
         throw new Exception('Error al obtener token: ' . $token['error']);
     }
     
@@ -40,48 +35,40 @@ try {
     $name = $userinfo->name;
     $picture = $userinfo->picture;
 
-    error_log('Auth callback: User authenticated - ' . $email);
-
+    // DEBUG: Agregar log para debugging
+    error_log("Auth callback - Email: $email");
+    
     // Verificar dominio autorizado
     if (!isDomainAllowed($email)) {
         $user_domain = substr(strrchr($email, "@"), 1);
-        error_log('Auth callback: Domain not allowed - ' . $user_domain);
+        error_log("Domain not allowed: $user_domain for email: $email");
         header('Location: login.php?error=domain_not_allowed&domain=' . urlencode($user_domain));
         exit();
     }
 
-    // Guardar información del usuario en la sesión
+    // IMPORTANTE: Usar SessionManager para guardar
+    SessionManager::start(); // Asegurar que la sesión esté iniciada
+    
     $_SESSION['user'] = [
         'email' => $email,
         'name' => $name,
         'picture' => $picture,
         'domain' => substr(strrchr($email, "@"), 1),
-        'login_time' => time(),
-        'last_activity' => time()
+        'login_time' => time()
     ];
 
-    // Log de éxito
-    error_log('Auth callback: Session created successfully for ' . $email);
-    
-    // Verificar que la sesión se guardó correctamente
-    if (!isset($_SESSION['user'])) {
-        error_log('Auth callback: Failed to save session data');
-        throw new Exception('Error al guardar datos de sesión');
-    }
+    // DEBUG: Verificar que se guardó
+    error_log("Session saved: " . print_r($_SESSION['user'], true));
 
-    // Log adicional para tracking (si Utils está disponible)
-    if (class_exists('Utils')) {
-        Utils::logToFile("User login successful: $email from " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'INFO');
-    }
-
-    // Redirigir al dashboard
+    // Limpiar buffer y redirigir
+    ob_end_clean();
     header('Location: index.php');
     exit();
 
 } catch (Exception $e) {
     error_log('Error en autenticación: ' . $e->getMessage());
-    error_log('Auth callback: Exception details - ' . $e->getTraceAsString());
-    header('Location: login.php?error=auth_failed&details=' . urlencode($e->getMessage()));
+    ob_end_clean();
+    header('Location: login.php?error=auth_failed');
     exit();
 }
 ?>

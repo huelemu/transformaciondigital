@@ -92,12 +92,22 @@ function isAuthenticated() {
 function isDomainAllowed($email) {
     global $allowed_domains;
     
+    // DEBUG: Log para verificar
+    error_log("Checking domain for email: $email");
+    error_log("Allowed domains: " . implode(', ', $allowed_domains));
+    
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        error_log("Invalid email format: $email");
         return false;
     }
     
     $user_domain = substr(strrchr($email, "@"), 1);
-    return in_array($user_domain, $allowed_domains);
+    error_log("User domain: $user_domain");
+    
+    $allowed = in_array($user_domain, $allowed_domains);
+    error_log("Domain allowed: " . ($allowed ? 'YES' : 'NO'));
+    
+    return $allowed;
 }
 
 /**
