@@ -1,278 +1,179 @@
 <?php
-// login.php actualizado con mejor manejo de errores
+// Añadir al inicio del archivo para verificar autenticación
 require_once 'config.php';
-require_once 'error-handler.php';
-require_once 'vendor/autoload.php';
-
-// Si ya está autenticado, redirigir al dashboard
-if (isAuthenticated()) {
-    header('Location: index.php');
-    exit();
-}
-
-// Obtener información del error si existe
-$error_info = null;
-$domain = '';
-
-if (isset($_GET['error'])) {
-    $error_info = getErrorMessage($_GET['error']);
-    if (isset($_GET['domain'])) {
-        $domain = htmlspecialchars($_GET['domain']);
-    }
-}
-
-$client = new Google\Client();
-$client->setClientId(GOOGLE_CLIENT_ID);
-$client->setClientSecret(GOOGLE_CLIENT_SECRET);
-$client->setRedirectUri(GOOGLE_REDIRECT_URI);
-$client->addScope("email");
-$client->addScope("profile");
-$client->addScope("openid");
-
-$auth_url = $client->createAuthUrl();
+requireAuth(); // Esto verificará que el usuario esté logueado
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Procesos SkyTel</title>
     <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
+    <link rel="stylesheet" href="libs/css/portal-styles.css" type="text/css" />
     <link href="libs/css/google-opensans.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            font-family: 'Open Sans', sans-serif;
-        }
-        
-        .login-container {
-            background: white;
-            padding: 3rem;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 450px;
-            width: 100%;
-            margin: 20px;
-        }
-        
-        .logo {
-            margin-bottom: 2rem;
-        }
-        
-        .logo img {
-            max-width: 200px;
-            height: auto;
-        }
-        
-        .welcome-text {
-            color: #333;
-            margin-bottom: 2rem;
-        }
-        
-        .welcome-text h1 {
-            margin: 0 0 1rem 0;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .welcome-text p {
-            color: #7f8c8d;
-            margin: 0;
-        }
-        
-        .google-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: #4285f4;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        
-        .google-btn:hover {
-            background: #3367d6;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .google-icon {
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .footer-text {
-            margin-top: 2rem;
-            color: #95a5a6;
-            font-size: 14px;
-        }
-        
-        .security-info {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1.5rem;
-            border-left: 4px solid #4285f4;
-        }
-        
-        .security-info h3 {
-            margin: 0 0 0.5rem 0;
-            color: #2c3e50;
-            font-size: 14px;
-        }
-        
-        .security-info p {
-            margin: 0;
-            color: #7f8c8d;
-            font-size: 12px;
-        }
-        
-        .authorized-domains {
-            margin-top: 1rem;
-            text-align: left;
-        }
-        
-        .domain-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 5px;
-            margin-top: 8px;
-        }
-        
-        .domain-item {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            text-align: center;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .loading {
-            display: none;
-            margin-top: 15px;
-            color: #666;
-        }
-        
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #4285f4;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    <script src="libs/js/app/jquery.min.js"></script>
+
+    <title>Procesos SkyTel</title>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo">
-            <i class="biz-ex-logo-img" style="font-size: 48px; color: #4285f4;"></i>
-        </div>
-        
-        <div class="welcome-text">
-            <h1>Bienvenido</h1>
-            <p>Portal de Procesos SkyTel</p>
-        </div>
-        
-        <?php if ($error_info): ?>
-            <?= renderAlert($error_info, $domain) ?>
-        <?php endif; ?>
-        
-        <a href="<?php echo htmlspecialchars($auth_url); ?>" class="google-btn" id="loginBtn">
-            <div class="google-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                    <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
+
+    <div id="content">
+        <div id="indice">
+            <div class="menu-content">
+                <a href="#" class="biz-ex-navigate biz-ex-logo-navigate" onclick="location.reload()">
+                    <i class="biz-ex-logo-img"></i>
+                </a>
+                <h1 class="biz-ex-title-process-jml">Procesos:</h1>
+                <ul class="nav-bar">
+                <?php
+                    $directorio = "procesos";
+                    $subdirectorios = [];
+
+                    // Abrir el directorio y recoger todos los subdirectorios en un array
+                    if (is_dir($directorio)) {
+                        if ($dh = opendir($directorio)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != "..") {
+                                    $subdirectorios[] = $subdirectorio;
+                                }
+                            }
+                            closedir($dh);
+                        }
+                    }
+
+                    // Ordenar alfabéticamente el array de subdirectorios
+                    sort($subdirectorios);
+
+                    // Generar la lista ordenada
+                    foreach ($subdirectorios as $subdirectorio) {
+                        // Construimos la ruta completa al archivo index.html
+                        $ruta_index = "$directorio/$subdirectorio/index.html";
+                        echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                    }
+                ?>
+          
+                <!-- <h1 class="biz-ex-title-process-jml">Oficina de Proyectos:</h1> -->
+                <!-- <li><a href='https://app.powerbi.com/view?r=eyJrIjoiMjcxYTNhYjktZTQ5OC00Y2MyLWJkOTgtNDRhNTcyZTg4ZTE1IiwidCI6IjFmNTNjYTlkLTg1YzItNDcwYS1iYTFiLTY5YzExNTcwZTI0NyIsImMiOjR9' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Tablero PMO</div></a></li> -->
+
+                <h1 class="biz-ex-title-process-jml">Herramientas:</h1>
+                <li><a href='herramientas/1.Cotizador/index.php' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Cotizador</div></a></li>
+
+                <h1 class="biz-ex-title-process-jml">Capacitaciones:</h1>
+                <?php
+                    // Buscar capacitaciones en directorio específico
+                    $directorio_capacitaciones = "capacitaciones";
+                    if (is_dir($directorio_capacitaciones)) {
+                        $subdirectorios_cap = [];
+                        if ($dh = opendir($directorio_capacitaciones)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != "..") {
+                                    $subdirectorios_cap[] = $subdirectorio;
+                                }
+                            }
+                            closedir($dh);
+                        }
+                        sort($subdirectorios_cap);
+                        foreach ($subdirectorios_cap as $subdirectorio) {
+                            $ruta_index = "$directorio_capacitaciones/$subdirectorio/index.html";
+                            echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                        }
+                    } else {
+                        // Enlaces de capacitaciones como fallback si no existe el directorio
+                        echo "<li><a href='#' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Capacitaciones (próximamente)</div></a></li>";
+                    }
+                ?>
+
+                <h1 class="biz-ex-title-process-jml">Recursos Compartidos SkyTel:</h1>
+                <li><a href='https://sites.google.com/skytel.tech/gws/multimedia?authuser=0' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentaciones</div></a></li>
+                <li><a href='https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Alineacion...</div></a></li>
+                <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
+                <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
+                <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestion</div></a></li>
+
+                <!-- <h1 class="biz-ex-title-process-jml">Ayuda Memoria:</h1> -->
+                <!-- <li><a href='https://docs.google.com/presentation/d/11dTQCMk80yQFCJAR7RSSSNqE-TYukXfZmNjOTJy3g2o/edit?usp=sharing' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Transformacion</div></a></li> -->
+                <!-- <li><a href='https://docs.google.com/presentation/d/1jQZMtX5CJsDozaEDyojRRZdXvOrPKN9v/edit?usp=sharing&ouid=101540677606614220156&rtpof=true&sd=true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentacion Procesos</div></a></li> -->
+
+                </ul>
             </div>
-            <span id="btnText">Iniciar sesión con Google</span>
-        </a>
-        
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            Conectando con Google...
-        </div>
-        
-        <div class="security-info">
-            <h3>🔒 Acceso Seguro</h3>
-            <p>Solo usuarios con cuentas de los siguientes dominios pueden acceder:</p>
-            <div class="authorized-domains">
-                <div class="domain-list">
-                    <?php 
-                    global $allowed_domains;
-                    foreach ($allowed_domains as $domain): 
-                    ?>
-                        <div class="domain-item">@<?= $domain ?></div>
-                    <?php endforeach; ?>
+            
+            <!-- Sección de usuario al final del menú -->
+            <div class="user-section">
+                <div class="user-info">
+                    <?php if (isset($_SESSION['user']['picture']) && !empty($_SESSION['user']['picture'])): ?>
+                        <img src="<?= htmlspecialchars($_SESSION['user']['picture']) ?>" alt="Avatar" class="user-avatar" style="background: none;">
+                    <?php else: ?>
+                        <div class="user-avatar">
+                            <?= strtoupper(substr($_SESSION['user']['name'] ?? 'U', 0, 1)) ?>
+                        </div>
+                    <?php endif; ?>
+                    <div class="user-details">
+                        <div class="user-name"><?= htmlspecialchars($_SESSION['user']['name'] ?? 'Usuario') ?></div>
+                        <div class="user-email"><?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?></div>
+                    </div>
                 </div>
+                <a href="logout.php" class="logout-btn" onclick="return confirm('¿Estás seguro de que quieres cerrar sesión?')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17,8L15.59,6.59L13.17,9.01L13.17,2L11.17,2L11.17,9.01L8.75,6.59L7.34,8L12.17,12.83L17,8Z"/>
+                        <path d="M19,15V18C19,19.1 18.1,20 17,20H7C5.9,20 5,19.1 5,18V15H3V18C3,20.21 4.79,22 7,22H17C19.21,22 21,20.21 21,18V15H19Z"/>
+                    </svg>
+                    Cerrar Sesión
+                </a>
             </div>
         </div>
-        
-        <div class="footer-text">
-            Portal de Gestión SkyTel<br>
-            Transformación Digital
+
+        <div style="width:20px; border-right: 1px solid #ccc;">
+            <img id="menu-contract" style="float:right; margin-left:2px; margin-right:2px;" src="libs/img/bzg-panel-contract.svg" class="biz-ex-svg-icon biz-ex-svg-toggle biz-ex-menu-visible-toggle biz-ex-menu-toggle-hide" alt="">
+            <img id="menu-expand" style="float:right; margin-left:2px; margin-right:2px;" src="libs/img/bzg-panel-expand.svg" class="biz-ex-svg-icon biz-ex-svg-toggle biz-ex-menu-visible-toggle biz-ex-menu-toggle-show" alt="">
+        </div>
+        <div id="iframe-container">
+            <div class="placeholder" id="placeholder">JML (Este texto se ocultará una vez que el iframe cargue)</div>
+            <iframe id="miIframe" title="Portal de Gestion" width="1140" height="541.25" src="https://pgoyn.skytel.com.ar/" frameborder="0" allowFullScreen="true"></iframe>
         </div>
     </div>
-    
+
     <script>
-        document.getElementById('loginBtn').addEventListener('click', function() {
-            document.getElementById('btnText').textContent = 'Conectando...';
-            document.getElementById('loading').style.display = 'block';
+    document.addEventListener("DOMContentLoaded", function() {
+        // JavaScript para manejar los clics en los enlaces
+        const enlaces = document.querySelectorAll('#indice a');
+        const iframe = document.getElementById('miIframe');
+        const placeholder = document.getElementById('placeholder');
+      
+        enlaces.forEach(enlace => {
+            enlace.addEventListener('click', (event) => {
+                if (enlace.getAttribute('data-new-tab') === 'true') {
+                    // Si el enlace tiene el atributo data-new-tab, no hacemos nada para permitir la apertura en una nueva pestaña
+                    return;
+                }
+
+                // Ignorar clics en el botón de logout
+                if (enlace.classList.contains('logout-btn')) {
+                    return;
+                }
+
+                event.preventDefault();
+                const url = enlace.href;
+                iframe.src = url;
+                iframe.style.display = 'block';
+                placeholder.style.display = 'none';
+            });
         });
-        
-        // Auto-hide success/info messages after 5 seconds
-        const alerts = document.querySelectorAll('.alert-success, .alert-info');
-        alerts.forEach(alert => {
-            setTimeout(() => {
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 300);
-            }, 5000);
+
+        $('#menu-contract').on("click", function() {
+            $('#menu-contract').removeClass("biz-ex-menu-toggle-hide").addClass("biz-ex-menu-toggle-show");
+            $('#indice').hide();
+            $('#menu-expand').removeClass("biz-ex-menu-toggle-show").addClass("biz-ex-menu-toggle-hide");
         });
-    </script>
+
+        $('#menu-expand').on("click", function() {           
+            $('#menu-expand').removeClass("biz-ex-menu-toggle-hide").addClass("biz-ex-menu-toggle-show");
+            $('#indice').show();
+            $('#menu-contract').removeClass("biz-ex-menu-toggle-show").addClass("biz-ex-menu-toggle-hide");
+        });
+    });
+</script>
+
 </body>
 </html>
