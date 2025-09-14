@@ -11,11 +11,150 @@ requireAuth(); // Esto verificará que el usuario esté logueado
     <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
-    <link rel="stylesheet" href="libs/css/portal-styles.css" type="text/css" />
     <link href="libs/css/google-opensans.css" rel="stylesheet">
     <script src="libs/js/app/jquery.min.js"></script>
 
-    <title>Transformacion Digital - SkyTel</title>
+    <title>Procesos SkyTel</title>
+
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            height: 100vh;
+        }
+        header {
+            width: 100%;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-bottom: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        #content {
+            display: flex;
+            flex: 1;
+        }
+        #indice {
+            width: 300px;
+            /* border-right: 1px solid #ccc; */
+            padding: 5px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Contenedor para el contenido principal del menú */
+        .menu-content {
+            flex: 1;
+        }
+        
+        /* Sección de usuario al final del menú */
+        .user-section {
+            margin-top: auto;
+            padding: 15px 10px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #f8f9fa;
+            margin: 10px -5px -5px -5px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .user-details {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .user-email {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .logout-btn:hover {
+            background: #c82333;
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        
+        .logout-btn:active {
+            transform: translateY(0);
+        }
+        
+        #iframe-container {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .placeholder {
+            font-size: 24px;
+            text-align: center;
+            margin-top: 20%;
+        }   
+        #iframe-container .placeholder {
+            display: none; /* Oculta el placeholder inicialmente */
+        }
+        #iframe-container #miIframe:loaded + .placeholder {
+            display: block; /* Muestra el placeholder si el iframe no carga */
+        }
+      </style>
 </head>
 <body>
 
@@ -54,6 +193,9 @@ requireAuth(); // Esto verificará que el usuario esté logueado
                     }
                 ?>
           
+                <!-- <h1 class="biz-ex-title-process-jml">Oficina de Proyectos:</h1> -->
+                <!-- <li><a href='https://app.powerbi.com/view?r=eyJrIjoiMjcxYTNhYjktZTQ5OC00Y2MyLWJkOTgtNDRhNTcyZTg4ZTE1IiwidCI6IjFmNTNjYTlkLTg1YzItNDcwYS1iYTFiLTY5YzExNTcwZTI0NyIsImMiOjR9' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Tablero PMO</div></a></li> -->
+
                 <h1 class="biz-ex-title-process-jml">Herramientas:</h1>
                 <li><a href='herramientas/1.Cotizador/index.php' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Cotizador</div></a></li>
 
