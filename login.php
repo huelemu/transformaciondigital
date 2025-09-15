@@ -254,8 +254,7 @@ $auth_url = $client->createAuthUrl();
         </div>
         
         <div class="footer-text">
-            Portal de Gestión SkyTel<br>
-            Transformación Digital
+            SkyTel - Transformación Digital
         </div>
     </div>
     
