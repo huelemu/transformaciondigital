@@ -298,18 +298,95 @@ $user = $_SESSION['user'];
             }
         }
         
-        /* Estilo especial para el enlace del dashboard */
+        /* Estilo especial para el dashboard siempre visible */
+        .dashboard-home {
+            margin-bottom: 20px;
+        }
+        
         .dashboard-link {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
             color: white !important;
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            border: none !important;
         }
         
         .dashboard-link:hover {
             transform: translateX(5px) !important;
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
             color: white !important;
+        }
+        
+        /* Estilos para menús desplegables */
+        .menu-section {
+            margin-bottom: 10px;
+        }
+        
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .collapsible:hover {
+            background: #f0f0f0;
+            transform: translateX(2px);
+        }
+        
+        .toggle-icon {
+            float: right;
+            transition: transform 0.3s ease;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        
+        .toggle-icon.rotated {
+            transform: rotate(-90deg);
+        }
+        
+        .collapsible-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+        
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+        
+        .collapsible-content li {
+            animation: slideInFromLeft 0.3s ease;
+        }
+        
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Mejorar hover de las secciones colapsables */
+        .collapsible::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .collapsible:hover::after {
+            width: 100%;
         }
     </style>
 </head>
@@ -321,106 +398,123 @@ $user = $_SESSION['user'];
                 <div style="margin-top: 10px; font-weight: 600; color: #667eea;">Portal SkyTel</div>
             </a>
             
-            <!-- Dashboard Link -->
-            <h1 class="biz-ex-title-process-jml">🏠 Inicio</h1>
-            <ul class="nav-bar">
-                <li>
-                    <a href="#" class="biz-ex-navigate dashboard-link" onclick="loadDashboard()">
-                        <div class="truncate-text biz-ex-menu">📊 Dashboard Principal</div>
-                    </a>
-                </li>
-            </ul>
+            <!-- Dashboard siempre visible -->
+            <div class="dashboard-home">
+                <a href="#" class="biz-ex-navigate dashboard-link" onclick="loadDashboard()">
+                    <div class="truncate-text biz-ex-menu">🏠 Dashboard Principal</div>
+                </a>
+            </div>
             
             <!-- Herramientas -->
-            <h1 class="biz-ex-title-process-jml">🛠️ Herramientas</h1>
-            <ul class="nav-bar">
-                <?php
-                $directorio = "herramientas";
-                $subdirectorios = [];
+            <div class="menu-section">
+                <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('herramientas')">
+                    🛠️ Herramientas 
+                    <span class="toggle-icon" id="herramientas-icon">▼</span>
+                </h1>
+                <ul class="nav-bar collapsible-content" id="herramientas-content">
+                    <?php
+                    $directorio = "herramientas";
+                    $subdirectorios = [];
 
-                if (is_dir($directorio)) {
-                    if ($dh = opendir($directorio)) {
-                        while (($subdirectorio = readdir($dh)) !== false) {
-                            if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
-                                $subdirectorios[] = $subdirectorio;
+                    if (is_dir($directorio)) {
+                        if ($dh = opendir($directorio)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
+                                    $subdirectorios[] = $subdirectorio;
+                                }
                             }
+                            closedir($dh);
                         }
-                        closedir($dh);
                     }
-                }
 
-                sort($subdirectorios);
+                    sort($subdirectorios);
 
-                foreach ($subdirectorios as $subdirectorio) {
-                    $ruta_index = "$directorio/$subdirectorio/";
-                    echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-                }
-                ?>
-            </ul>
+                    foreach ($subdirectorios as $subdirectorio) {
+                        $ruta_index = "$directorio/$subdirectorio/";
+                        echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                    }
+                    ?>
+                </ul>
+            </div>
 
             <!-- Procesos -->
-            <h1 class="biz-ex-title-process-jml">⚙️ Procesos Bizagi</h1>
-            <ul class="nav-bar">
-                <?php
-                $directorio = "procesos";
-                $subdirectorios = [];
+            <div class="menu-section">
+                <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('procesos')">
+                    ⚙️ Procesos Bizagi 
+                    <span class="toggle-icon" id="procesos-icon">▼</span>
+                </h1>
+                <ul class="nav-bar collapsible-content" id="procesos-content">
+                    <?php
+                    $directorio = "procesos";
+                    $subdirectorios = [];
 
-                if (is_dir($directorio)) {
-                    if ($dh = opendir($directorio)) {
-                        while (($subdirectorio = readdir($dh)) !== false) {
-                            if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
-                                $subdirectorios[] = $subdirectorio;
+                    if (is_dir($directorio)) {
+                        if ($dh = opendir($directorio)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
+                                    $subdirectorios[] = $subdirectorio;
+                                }
                             }
+                            closedir($dh);
                         }
-                        closedir($dh);
                     }
-                }
 
-                sort($subdirectorios);
+                    sort($subdirectorios);
 
-                foreach ($subdirectorios as $subdirectorio) {
-                    $ruta_index = "$directorio/$subdirectorio/index.html";
-                    echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-                }
-                ?>
-            </ul>
+                    foreach ($subdirectorios as $subdirectorio) {
+                        $ruta_index = "$directorio/$subdirectorio/index.html";
+                        echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                    }
+                    ?>
+                </ul>
+            </div>
 
-            <!-- Videos, Cursos -->
-            <h1 class="biz-ex-title-process-jml">📚 Capacitaciones</h1>
-            <ul class="nav-bar">
-                <?php
-                $directorio = "capacitaciones";
-                $subdirectorios = [];
+            <!-- Capacitaciones -->
+            <div class="menu-section">
+                <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('capacitaciones')">
+                    📚 Capacitaciones 
+                    <span class="toggle-icon" id="capacitaciones-icon">▼</span>
+                </h1>
+                <ul class="nav-bar collapsible-content" id="capacitaciones-content">
+                    <?php
+                    $directorio = "capacitaciones";
+                    $subdirectorios = [];
 
-                if (is_dir($directorio)) {
-                    if ($dh = opendir($directorio)) {
-                        while (($subdirectorio = readdir($dh)) !== false) {
-                            if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
-                                $subdirectorios[] = $subdirectorio;
+                    if (is_dir($directorio)) {
+                        if ($dh = opendir($directorio)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
+                                    $subdirectorios[] = $subdirectorio;
+                                }
                             }
+                            closedir($dh);
                         }
-                        closedir($dh);
                     }
-                }
 
-                sort($subdirectorios);
+                    sort($subdirectorios);
 
-                foreach ($subdirectorios as $subdirectorio) {
-                    $ruta_index = "$directorio/$subdirectorio/index.html";
-                    echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-                }
-                ?>
-            </ul>
+                    foreach ($subdirectorios as $subdirectorio) {
+                        $ruta_index = "$directorio/$subdirectorio/index.html";
+                        echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                    }
+                    ?>
+                </ul>
+            </div>
 
             <!-- Recursos Compartidos SkyTel -->
-            <h1 class="biz-ex-title-process-jml">🌐 Recursos SkyTel</h1>
-            <ul class="nav-bar">
-                <li><a href='https://sites.google.com/skytel.tech/gws/multimedia?authuser=0' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentaciones</div></a></li>
-                <li><a href='https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Alineación...</div></a></li>
-                <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
-                <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
-                <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestión</div></a></li>
-            </ul>
+            <div class="menu-section">
+                <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('recursos')">
+                    🌐 Recursos SkyTel 
+                    <span class="toggle-icon" id="recursos-icon">▼</span>
+                </h1>
+                <ul class="nav-bar collapsible-content" id="recursos-content">
+                    <li><a href='https://sites.google.com/skytel.tech/gws/multimedia?authuser=0' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentaciones</div></a></li>
+                    <li><a href='https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Alineación...</div></a></li>
+                    <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
+                    <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
+                    <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestión</div></a></li>
+                </ul>
+            </div>
 
             <!-- Sección de usuario al final del menú -->
             <div class="user-section">
@@ -452,14 +546,11 @@ $user = $_SESSION['user'];
         </div>
 
         <div id="iframe-container">
-            <div class="placeholder" id="placeholder">
+            <div class="placeholder" id="placeholder" style="display: none;">
                 <h3>🎯 Portal SkyTel</h3>
-                <p>Haz clic en <strong>"📊 Dashboard Principal"</strong> para comenzar</p>
-                <p style="margin-top: 1rem; opacity: 0.7; font-size: 14px;">
-                    O selecciona cualquier herramienta, proceso o capacitación del menú lateral
-                </p>
+                <p>Selecciona cualquier herramienta, proceso o capacitación del menú lateral</p>
             </div>
-            <iframe id="miIframe" title="Portal de Gestión" frameborder="0" allowFullScreen="true" style="display: none;"></iframe>
+            <iframe id="miIframe" title="Portal de Gestión" frameborder="0" allowFullScreen="true"></iframe>
         </div>
     </div>
 
@@ -523,7 +614,24 @@ $user = $_SESSION['user'];
             });
 
             resetInactivityTimer();
+            
+            // Cargar dashboard automáticamente al inicio
+            loadDashboard();
         });
+
+        // Función para toggle de secciones
+        function toggleSection(sectionName) {
+            const content = document.getElementById(sectionName + '-content');
+            const icon = document.getElementById(sectionName + '-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                icon.classList.remove('rotated');
+            } else {
+                content.classList.add('collapsed');
+                icon.classList.add('rotated');
+            }
+        }
 
         // Función para cargar el dashboard
         function loadDashboard() {
