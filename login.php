@@ -1,35 +1,183 @@
 <?php
-// login.php - Versión simplificada sin session manager
+// login.php - Google OAuth simplificado sin session manager complejo
 session_start();
 
-// Si ya está logueado, redirigir al index
-if (isset($_SESSION['usuario']) && !empty($_SESSION['usuario'])) {
-    header("Location: index.php");
-    exit;
+// Función simple para verificar autenticación
+function isAuthenticated() {
+    return isset($_SESSION['user']) && !empty($_SESSION['user']['email']);
 }
 
-// Mostrar error si existe
-$error = '';
+// Si ya está autenticado, redirigir al dashboard
+if (isAuthenticated()) {
+    header('Location: index.php');
+    exit();
+}
+
+// Configuración de Google OAuth (desde tu config existente)
+require_once 'vendor/autoload.php';
+
+// Configuración directa (puedes mover esto a un archivo config-simple.php si prefieres)
+define('GOOGLE_CLIENT_ID', '1060539804507-ujrlt0dldfr0henc75v0nt5f6ij1l5iq.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET', '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');
+define('GOOGLE_REDIRECT_URI', 'https://transformacion.skytel.tech/auth-callback.php');
+
+// Dominios permitidos
+$allowed_domains = [
+    'skytel.tech',
+    'skytel.com.ar', 
+    'skytel.com.uy',
+    'skytel.com.py',
+    'skytel.com.es',
+    'skytel.com.do'
+];
+
+// Función para verificar dominio
+function isDomainAllowed($email) {
+    global $allowed_domains;
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    
+    $user_domain = substr(strrchr($email, "@"), 1);
+    return in_array($user_domain, $allowed_domains);
+}
+
+// Configurar cliente de Google
+$client = new Google\Client();
+$client->setClientId(GOOGLE_CLIENT_ID);
+$client->setClientSecret(GOOGLE_CLIENT_SECRET);
+$client->setRedirectUri(GOOGLE_REDIRECT_URI);
+$client->addScope("email");
+$client->addScope("profile");
+$client->addScope("openid");
+
+$auth_url = $client->createAuthUrl();
+
+// Manejo de errores
+$error_info = null;
+$domain = '';
+
 if (isset($_GET['error'])) {
     switch ($_GET['error']) {
-        case '1':
-            $error = 'Usuario o contraseña incorrectos';
+        case 'no_code':
+            $error_info = [
+                'title' => 'Error de Autenticación',
+                'message' => 'No se recibió el código de autorización de Google.',
+                'type' => 'error'
+            ];
+            break;
+        case 'auth_failed':
+            $error_info = [
+                'title' => 'Error de Autenticación',
+                'message' => 'Hubo un problema al autenticar con Google. Por favor, inténtalo nuevamente.',
+                'type' => 'error'
+            ];
+            break;
+        case 'domain_not_allowed':
+            $domain = $_GET['domain'] ?? '';
+            $error_info = [
+                'title' => 'Acceso Denegado',
+                'message' => 'Tu dominio de correo electrónico no está autorizado para acceder a este sistema.',
+                'type' => 'warning'
+            ];
             break;
         case 'session_expired':
-            $error = 'Tu sesión ha expirado';
+            $error_info = [
+                'title' => 'Sesión Expirada',
+                'message' => 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+                'type' => 'info'
+            ];
             break;
-        default:
-            $error = 'Error de autenticación';
     }
 }
+
+function renderAlert($error_info, $domain = '') {
+    if (!$error_info) return '';
+    
+    $icon_map = [
+        'error' => '❌',
+        'warning' => '⚠️',
+        'success' => '✅',
+        'info' => 'ℹ️'
+    ];
+    
+    $color_map = [
+        'error' => '#dc3545',
+        'warning' => '#ffc107',
+        'success' => '#28a745',
+        'info' => '#17a2b8'
+    ];
+    
+    $bg_map = [
+        'error' => '#f8d7da',
+        'warning' => '#fff3cd',
+        'success' => '#d4edda',
+        'info' => '#d1ecf1'
+    ];
+    
+    $text_map = [
+        'error' => '#721c24',
+        'warning' => '#856404',
+        'success' => '#155724',
+        'info' => '#0c5460'
+    ];
+    
+    $icon = $icon_map[$error_info['type']] ?? 'ℹ️';
+    $color = $color_map[$error_info['type']] ?? '#17a2b8';
+    $bg_color = $bg_map[$error_info['type']] ?? '#d1ecf1';
+    $text_color = $text_map[$error_info['type']] ?? '#0c5460';
+    
+    $message = $error_info['message'];
+    if ($error_info['type'] === 'warning' && $domain) {
+        $message .= "<br><small>Dominio detectado: <strong>$domain</strong></small>";
+    }
+    
+    return "
+    <div class='alert' style='
+        background: $bg_color;
+        border: 1px solid $color;
+        color: $text_color;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        animation: slideIn 0.3s ease-out;
+    '>
+        <div style='display: flex; align-items: center; gap: 10px;'>
+            <span style='font-size: 18px;'>$icon</span>
+            <div>
+                <strong>{$error_info['title']}</strong><br>
+                $message
+            </div>
+        </div>
+    </div>";
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SkyTel</title>
+    <title>Login - Transformación Digital - SkyTel</title>
     <style>
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -38,17 +186,18 @@ if (isset($_GET['error'])) {
             justify-content: center;
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
         }
         
         .login-container {
             background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             text-align: center;
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
-            margin: 20px;
+            animation: slideIn 0.5s ease-out;
         }
         
         .logo {
@@ -58,74 +207,128 @@ if (isset($_GET['error'])) {
         .logo h1 {
             color: #667eea;
             margin: 0;
-            font-size: 2.5rem;
+            font-size: 3rem;
+            font-weight: 300;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logo p {
+            color: #666;
+            margin: 0.5rem 0 0 0;
+            font-size: 1.1rem;
             font-weight: 300;
         }
         
-        .login-form {
-            margin-top: 2rem;
+        .google-login-section {
+            margin: 2rem 0;
         }
         
-        .form-group {
-            margin-bottom: 1.5rem;
+        .google-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 24px;
+            background: white;
+            color: #333;
+            border: 2px solid #dadce0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .google-btn:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .google-btn:active {
+            transform: translateY(0);
+            animation: pulse 0.3s ease;
+        }
+        
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .domains-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border-left: 4px solid #667eea;
+        }
+        
+        .domains-info h4 {
+            color: #333;
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .domains-list {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
             text-align: left;
         }
         
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #555;
-            font-weight: 500;
+        .domains-list div {
+            margin-bottom: 0.3rem;
         }
         
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e5e9;
+        .security-note {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #e8f4f8;
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        .login-btn:hover {
-            transform: translateY(-1px);
-        }
-        
-        .error-message {
-            background-color: #fee;
-            color: #c33;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            border: 1px solid #fcc;
-        }
-        
-        .info-message {
-            background-color: #e8f4f8;
             color: #2c5282;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 1rem;
+            font-size: 0.9rem;
             border: 1px solid #bee3f8;
+        }
+        
+        .loading {
+            display: none;
+            margin-top: 1rem;
+            color: #666;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 500px) {
+            .login-container {
+                padding: 2rem;
+                margin: 10px;
+            }
+            
+            .logo h1 {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
@@ -133,39 +336,72 @@ if (isset($_GET['error'])) {
     <div class="login-container">
         <div class="logo">
             <h1>SkyTel</h1>
-            <p style="color: #666; margin: 0;">Transformación Digital</p>
+            <p>Transformación Digital</p>
         </div>
         
-        <?php if (!empty($error)): ?>
-            <div class="error-message">
-                <?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
+        <?= renderAlert($error_info, $domain) ?>
         
         <?php if (isset($_GET['logged_out'])): ?>
-            <div class="info-message">
-                Has cerrado sesión correctamente
+            <div class="alert" style="background: #d4edda; border: 1px solid #28a745; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 18px;">✅</span>
+                    <div>
+                        <strong>Sesión Cerrada</strong><br>
+                        Has cerrado sesión correctamente
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
         
-        <form class="login-form" method="POST" action="validar_login.php">
-            <div class="form-group">
-                <label for="usuario">Usuario:</label>
-                <input type="text" id="usuario" name="usuario" required autocomplete="username">
-            </div>
+        <div class="google-login-section">
+            <a href="<?= htmlspecialchars($auth_url) ?>" class="google-btn" id="googleLoginBtn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continuar con Google
+            </a>
             
-            <div class="form-group">
-                <label for="password">Contraseña:</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                Conectando con Google...
             </div>
-            
-            <button type="submit" class="login-btn">Iniciar Sesión</button>
-        </form>
+        </div>
         
-        <p style="margin-top: 2rem; color: #666; font-size: 0.9rem;">
-            Usuario de prueba: <strong>admin</strong><br>
-            Contraseña: <strong>1234</strong>
-        </p>
+        <div class="domains-info">
+            <h4>
+                🏢 Dominios Autorizados
+            </h4>
+            <div class="domains-list">
+                <div>• skytel.tech</div>
+                <div>• skytel.com.ar</div>
+                <div>• skytel.com.uy</div>
+                <div>• skytel.com.py</div>
+                <div>• skytel.com.es</div>
+                <div>• skytel.com.do</div>
+            </div>
+        </div>
+        
+        <div class="security-note">
+            🔒 <strong>Acceso Seguro:</strong> Solo usuarios con cuentas de los dominios autorizados pueden acceder al sistema.
+        </div>
     </div>
+    
+    <script>
+        document.getElementById('googleLoginBtn').addEventListener('click', function() {
+            document.getElementById('loading').style.display = 'block';
+            this.style.opacity = '0.7';
+            this.style.pointerEvents = 'none';
+        });
+        
+        // Ocultar loading si el usuario regresa a la página
+        window.addEventListener('pageshow', function() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('googleLoginBtn').style.opacity = '1';
+            document.getElementById('googleLoginBtn').style.pointerEvents = 'auto';
+        });
+    </script>
 </body>
 </html>

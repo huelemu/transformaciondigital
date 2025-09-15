@@ -1,14 +1,44 @@
 <?php
-// auth-callback.php - Callback de autenticación
-require_once 'config.php';
+// auth-callback.php - Callback de autenticación simplificado
+session_start();
+
 require_once 'vendor/autoload.php';
 
+// Configuración directa (igual que en login.php)
+define('GOOGLE_CLIENT_ID', '1060539804507-ujrlt0dldfr0henc75v0nt5f6ij1l5iq.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET', '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');
+define('GOOGLE_REDIRECT_URI', 'https://transformacion.skytel.tech/auth-callback.php');
+
+// Dominios permitidos
+$allowed_domains = [
+    'skytel.tech',
+    'skytel.com.ar', 
+    'skytel.com.uy',
+    'skytel.com.py',
+    'skytel.com.es',
+    'skytel.com.do'
+];
+
+// Función para verificar dominio
+function isDomainAllowed($email) {
+    global $allowed_domains;
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    
+    $user_domain = substr(strrchr($email, "@"), 1);
+    return in_array($user_domain, $allowed_domains);
+}
+
+// Verificar que se recibió el código
 if (!isset($_GET['code'])) {
     header('Location: login.php?error=no_code');
     exit();
 }
 
 try {
+    // Configurar cliente de Google
     $client = new Google\Client();
     $client->setClientId(GOOGLE_CLIENT_ID);
     $client->setClientSecret(GOOGLE_CLIENT_SECRET);
@@ -38,21 +68,28 @@ try {
         exit();
     }
 
-    // Guardar información del usuario en la sesión
+    // Guardar información del usuario en la sesión (estructura simplificada)
     $_SESSION['user'] = [
         'email' => $email,
         'name' => $name,
         'picture' => $picture,
         'domain' => substr(strrchr($email, "@"), 1),
-        'login_time' => time()
+        'login_time' => time(),
+        'last_activity' => time()
     ];
+
+    // Log del login exitoso
+    error_log("Login exitoso: Usuario '{$email}' desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
 
     // Redirigir al dashboard
     header('Location: index.php');
     exit();
 
 } catch (Exception $e) {
+    // Log del error
     error_log('Error en autenticación: ' . $e->getMessage());
+    
+    // Redirigir al login con error
     header('Location: login.php?error=auth_failed');
     exit();
 }

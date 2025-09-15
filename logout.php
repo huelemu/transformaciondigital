@@ -1,6 +1,11 @@
 <?php
-// logout.php - Versión simplificada
+// logout.php - Logout simplificado para Google OAuth
 session_start();
+
+// Log del logout si hay usuario en sesión
+if (isset($_SESSION['user']['email'])) {
+    error_log("Logout: Usuario '{$_SESSION['user']['email']}' cerró sesión desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+}
 
 // Limpiar todas las variables de sesión
 session_unset();
