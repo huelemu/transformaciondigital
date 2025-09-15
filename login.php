@@ -37,7 +37,7 @@ $auth_url = $client->createAuthUrl();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Procesos SkyTel</title>
+    <title>Login - Transformación Digital - SkyTel</title>
     <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
@@ -214,7 +214,7 @@ $auth_url = $client->createAuthUrl();
         
         <div class="welcome-text">
             <h1>Bienvenido</h1>
-            <p>Portal de Procesos SkyTel</p>
+            <p>Transformación Digital - SkyTel</p>
         </div>
         
         <?php if ($error_info): ?>
