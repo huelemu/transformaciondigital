@@ -674,7 +674,7 @@ $user = $_SESSION['user'];
             placeholder.style.display = 'none';
         }
 
-        console.log('Portal SkyTel cargado correctamente');
+        console.log('Portal Transformación Digital cargado correctamente');
     </script>
 </body>
 </html>
