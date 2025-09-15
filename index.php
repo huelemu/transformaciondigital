@@ -1,14 +1,15 @@
-<?php
+// <?php
 // index.php - Página principal con autenticación
-require_once 'config.php';
-require_once 'utils.php';
+// require_once 'config.php';
+// require_once 'utils.php';
 
 // Verificar autenticación (redirige a login si no está autenticado)
-requireAuth();
+// requireAuth();
 
 // Log de acceso al dashboard
-Utils::logToFile("User accessed dashboard: " . $_SESSION['user']['email'], 'INFO');
-?>
+// Utils::logToFile("User accessed dashboard: " . $_SESSION['user']['email'], 'INFO');
+// ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
