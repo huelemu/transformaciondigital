@@ -39,16 +39,28 @@ class SessionManager {
     }
     
     public static function isValid() {
-        if (!isset($_SESSION['user'])) {
+        // Verificar que la sesión esté iniciada
+        if (session_status() === PHP_SESSION_NONE) {
+            return false;
+        }
+        
+        // Verificar que exista el usuario en la sesión
+        if (!isset($_SESSION['user']) || !is_array($_SESSION['user'])) {
+            return false;
+        }
+        
+        // Verificar que tenga los campos mínimos requeridos
+        if (!isset($_SESSION['user']['email']) || !isset($_SESSION['user']['login_time'])) {
             return false;
         }
         
         // Verificar tiempo de vida de la sesión
-        if (isset($_SESSION['user']['login_time'])) {
-            $session_lifetime = 28800; // 8 horas
-            if (time() - $_SESSION['user']['login_time'] > $session_lifetime) {
-                return false;
-            }
+        $session_lifetime = defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 28800; // 8 horas por defecto
+        
+        if (time() - $_SESSION['user']['login_time'] > $session_lifetime) {
+            // Sesión expirada
+            self::destroy();
+            return false;
         }
         
         return true;
@@ -58,6 +70,20 @@ class SessionManager {
         if (self::isValid()) {
             $_SESSION['user']['last_activity'] = time();
         }
+    }
+    
+    // Método de debug para diagnosticar problemas
+    public static function debug() {
+        return [
+            'session_status' => session_status(),
+            'session_id' => session_id(),
+            'session_data' => $_SESSION ?? null,
+            'user_exists' => isset($_SESSION['user']),
+            'user_data' => $_SESSION['user'] ?? null,
+            'is_valid' => self::isValid(),
+            'session_lifetime' => defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 'NOT DEFINED',
+            'current_time' => time()
+        ];
     }
 }
 ?>
