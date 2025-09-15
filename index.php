@@ -1,14 +1,15 @@
-<?php
+<!-- <?php
 // index.php - Página principal con autenticación
-require_once 'config.php';
-require_once 'utils.php';
+//require_once 'config.php';
+//require_once 'utils.php';
 
 // Verificar autenticación (redirige a login si no está autenticado)
-requireAuth();
+//requireAuth();
 
 // Log de acceso al dashboard
-Utils::logToFile("User accessed dashboard: " . $_SESSION['user']['email'], 'INFO');
-?>
+//Utils::logToFile("User accessed dashboard: " . $_SESSION['user']['email'], 'INFO');
+// ?>
+-->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -17,7 +18,7 @@ Utils::logToFile("User accessed dashboard: " . $_SESSION['user']['email'], 'INFO
     <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
-    <link rel="stylesheet" href="libs/css/portal-styles.css" type="text/css" />
+    <link rel="stylesheet" href="libs/css/portal-styles.css" type="text/css" /> -->
     <link href="libs/css/google-opensans.css" rel="stylesheet">
     <script src="libs/js/app/jquery.min.js"></script>
 
