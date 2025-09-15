@@ -367,6 +367,11 @@ function renderAlert($error_info, $domain = '') {
                 height: 46px;
             }
         }
+        .domains-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas de igual tamaño */
+        gap: 5px 20px; /* espacio entre filas y columnas */
+        }
     </style>
 </head>
 <body>
@@ -412,9 +417,7 @@ function renderAlert($error_info, $domain = '') {
         </div>
         
         <div class="domains-info">
-            <h4>
-                🏢 Dominios Autorizados
-            </h4>
+        <h4>🏢 Dominios Autorizados</h4>
             <div class="domains-list">
                 <div>• skytel.tech</div>
                 <div>• skytel.com.ar</div>
@@ -445,4 +448,4 @@ function renderAlert($error_info, $domain = '') {
         });
     </script>
 </body>
-</html>
+</html> 
