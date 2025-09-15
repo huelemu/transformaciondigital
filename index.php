@@ -57,11 +57,13 @@ $user = $_SESSION['user'];
             margin: 0;
             height: 100vh;
             font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
         }
         
         #content {
             display: flex;
             flex: 1;
+            height: 100vh;
         }
         
         #indice {
@@ -72,7 +74,8 @@ $user = $_SESSION['user'];
             background: #f8f9fa;
             border-right: 1px solid #dee2e6;
             height: 100vh;
-            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Personalizar scrollbar */
@@ -94,11 +97,19 @@ $user = $_SESSION['user'];
             background: #a8a8a8;
         }
         
+        /* Contenedor del menú que hace scroll */
+        .menu-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 10px;
+        }
+        
         #iframe-container {
             flex: 1;
             padding: 0;
             box-sizing: border-box;
             position: relative;
+            height: 100vh;
         }
         
         iframe {
@@ -187,14 +198,15 @@ $user = $_SESSION['user'];
             text-overflow: ellipsis;
         }
         
-        /* Sección de usuario mejorada */
+        /* Sección de usuario mejorada - posición fija al final */
         .user-section {
             padding: 15px 12px;
             border-top: 2px solid #e9ecef;
             background: #fff;
-            margin-top: 15px;
+            margin-top: auto;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-shrink: 0;
         }
         
         .user-info {
