@@ -4,6 +4,14 @@ require_once 'config.php';
 require_once 'error-handler.php';
 require_once 'vendor/autoload.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+// verifica logueo
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Si ya está autenticado, redirigir al dashboard
 if (isAuthenticated()) {
     header('Location: index.php');

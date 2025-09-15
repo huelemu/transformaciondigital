@@ -4,6 +4,14 @@ require_once 'config.php';
 require_once 'session-manager.php';
 require_once 'utils.php';
 
+ // Logout
+session_start();
+$_SESSION = [];
+session_destroy();
+header("Location: login.php");
+exit;
+
+
 // Log de la actividad de logout
 if (isAuthenticated()) {
     Utils::logToFile("User logged out: " . $_SESSION['user']['email'], 'INFO');
