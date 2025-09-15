@@ -1,31 +1,19 @@
 <?php
-// logout.php - Cerrar sesión
-require_once 'config.php';
-require_once 'session-manager.php';
-require_once 'utils.php';
+// logout.php - Versión simplificada
+session_start();
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
+// Limpiar todas las variables de sesión
 session_unset();
+
+// Destruir la sesión completamente
 session_destroy();
 
-// Ir al login sin menú
-header("Location: login.php");
-exit();
-
-// Log de la actividad de logout
-//if (isAuthenticated()) {
-//    Utils::logToFile("User logged out: " . $_SESSION['user']['email'], 'INFO');
-//}
-
-// Destruir la sesión de forma segura
-//SessionManager::destroy();
+// Limpiar la cookie de sesión si existe
+if (isset($_COOKIE[session_name()])) {
+    setcookie(session_name(), '', time() - 3600, '/');
+}
 
 // Redirigir al login con mensaje de confirmación
-//header('Location: login.php?logged_out=1');
-//exit();
+header("Location: login.php?logged_out=1");
+exit;
 ?>
-
-

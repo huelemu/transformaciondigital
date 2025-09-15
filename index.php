@@ -1,12 +1,25 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+// index.php - Versión simplificada sin session manager
+session_start();
+
+// Función simple para verificar autenticación
+function isAuthenticated() {
+    return isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
 }
 
-// Si no hay usuario logueado → mandar a login
-if (!isset($_SESSION['usuario'])) {
+// Si no está autenticado, redirigir al login
+if (!isAuthenticated()) {
     header("Location: login.php");
-    exit();
+    exit;
+}
+
+// Información del usuario logueado
+$usuario = $_SESSION['usuario'];
+$login_time = $_SESSION['login_time'] ?? time();
+
+// Función para formatear fecha
+function formatearFecha($timestamp) {
+    return date('d/m/Y H:i:s', $timestamp);
 }
 ?>
 <!DOCTYPE html>
@@ -14,229 +27,289 @@ if (!isset($_SESSION['usuario'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
-    <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
-    <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
-    <link href="libs/css/google-opensans.css" rel="stylesheet">
-    <script src="libs/js/app/jquery.min.js"></script>
-
-    <title>Transformación Digital - SkyTel</title>
-
+    <title>Dashboard - SkyTel</title>
     <style>
-        body {
-            display: flex;
-            flex-direction: column;
+        * {
             margin: 0;
-            height: 100vh;
-        }
-        header {
-            width: 100%;
-            padding: 10px;
-            background-color: #f4f4f4;
-            border-bottom: 1px solid #ccc;
+            padding: 0;
             box-sizing: border-box;
         }
-        #content {
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
             display: flex;
-            flex: 1;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        #indice {
-            width: 300px;
-            /* border-right: 1px solid #ccc; */
-            padding: 5px;
-            box-sizing: border-box;
-            overflow-y: auto;
+        
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 300;
         }
-        #iframe-container {
-            width: 100%;
-            padding: 5px;
-            box-sizing: border-box;
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
         }
-        .placeholder {
-            font-size: 24px;
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .welcome-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
             text-align: center;
-            margin-top: 20%;
-        }   
-        #iframe-container .placeholder {
-            display: none; /* Oculta el placeholder inicialmente */
         }
-        #iframe-container #miIframe:loaded + .placeholder {
-            display: block; /* Muestra el placeholder si el iframe no carga */
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
         }
-      </style>
+        
+        .stat-title {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .tools-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .tool-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+        
+        .tool-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .tool-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tool-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tool-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .session-info {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #2c5282;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
- <h1>Bienvenido <?php echo htmlspecialchars($_SESSION['usuario']); ?></h1>
-    <nav>
-        <a href="logout.php">Cerrar sesión</a>
-</nav>
-
-    <div id="content">
-        <div id="indice">
-        <a href="#" class="biz-ex-navigate biz-ex-logo-navigate" onclick="location.reload()">
-            <i class="biz-ex-logo-img"></i>
-        </a>
-        <!-- Cramos el apartado del menu para Las herramientas -->
-        <h1 class="biz-ex-title-process-jml">Herramientas:</h1>
-        <ul class="nav-bar">
-        <?php
-            $directorio = "herramientas";
-            $subdirectorios = [];
-
-            // Abrir el directorio y recoger todos los subdirectorios en un array
-            if (is_dir($directorio)) {
-                if ($dh = opendir($directorio)) {
-                    while (($subdirectorio = readdir($dh)) !== false) {
-                        if ($subdirectorio != "." && $subdirectorio != "..") {
-                            $subdirectorios[] = $subdirectorio;
-                        }
-                    }
-                    closedir($dh);
-                }
-            }
-
-            // Ordenar alfabéticamente el array de subdirectorios
-            sort($subdirectorios);
-
-            // Generar la lista ordenada
-            foreach ($subdirectorios as $subdirectorio) {
-                // Construimos la ruta completa al archivo index.html
-                $ruta_index = "$directorio/$subdirectorio/index.html";
-                echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-            }
-        ?>
-
-        <!-- Cramos el apartado del menu para Procesos -->
-        <h1 class="biz-ex-title-process-jml">Procesos:</h1>
-        <ul class="nav-bar">
-        <?php
-            $directorio = "procesos";
-            $subdirectorios = [];
-
-            // Abrir el directorio y recoger todos los subdirectorios en un array
-            if (is_dir($directorio)) {
-                if ($dh = opendir($directorio)) {
-                    while (($subdirectorio = readdir($dh)) !== false) {
-                        if ($subdirectorio != "." && $subdirectorio != "..") {
-                            $subdirectorios[] = $subdirectorio;
-                        }
-                    }
-                    closedir($dh);
-                }
-            }
-
-            // Ordenar alfabéticamente el array de subdirectorios
-            sort($subdirectorios);
-
-            // Generar la lista ordenada
-            foreach ($subdirectorios as $subdirectorio) {
-                // Construimos la ruta completa al archivo index.html
-                $ruta_index = "$directorio/$subdirectorio/index.html";
-                echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-            }
-        ?>
-  
-        <!-- Cramos el apartado del menu para Video, Cursos -->
-         <h1 class="biz-ex-title-process-jml">Videos, Cursos:</h1>
-        <ul class="nav-bar">
-        <?php
-            $directorio = "capacitaciones";
-            $subdirectorios = [];
-
-            // Abrir el directorio y recoger todos los subdirectorios en un array
-            if (is_dir($directorio)) {
-                if ($dh = opendir($directorio)) {
-                    while (($subdirectorio = readdir($dh)) !== false) {
-                        if ($subdirectorio != "." && $subdirectorio != "..") {
-                            $subdirectorios[] = $subdirectorio;
-                        }
-                    }
-                    closedir($dh);
-                }
-            }
-
-            // Ordenar alfabéticamente el array de subdirectorios
-            sort($subdirectorios);
-
-            // Generar la lista ordenada
-            foreach ($subdirectorios as $subdirectorio) {
-                // Construimos la ruta completa al archivo index.html
-                $ruta_index = "$directorio/$subdirectorio/index.html";
-                echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-            }
-        ?>
-
-
-        <h1 class="biz-ex-title-process-jml">Recursos Compartidos SkyTel:</h1>
-        <li><a href='https://sites.google.com/skytel.tech/gws/multimedia?authuser=0' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentaciones</div></a></li>
-        <li><a href='https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Alineacion...</div></a></li>
-        <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
-        <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
-        <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestion</div></a></li>
-
-
-        </ul> 
-
-        <!-- Botón de Logout -->
-        <div style="margin-top:20px; text-align:center;">
-            <a href="logout.php" class="biz-ex-navigate">
-                <div class="truncate-text biz-ex-menu">🚪 Cerrar Sesión</div>
-            </a>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>SkyTel</h1>
+                <p style="opacity: 0.8; font-size: 0.9rem;">Transformación Digital</p>
+            </div>
+            <div class="user-info">
+                <span>Bienvenido, <strong><?= htmlspecialchars($usuario) ?></strong></span>
+                <a href="logout.php" class="logout-btn">🚪 Cerrar Sesión</a>
+            </div>
         </div>
+    </header>
     
+    <div class="container">
+        <div class="welcome-card">
+            <h2>🎉 ¡Bienvenido al Dashboard!</h2>
+            <p>Has iniciado sesión correctamente en el sistema de Transformación Digital de SkyTel.</p>
+            
+            <div class="session-info">
+                <strong>Información de la sesión:</strong><br>
+                Usuario: <?= htmlspecialchars($usuario) ?><br>
+                Hora de ingreso: <?= formatearFecha($login_time) ?><br>
+                IP: <?= $_SERVER['REMOTE_ADDR'] ?? 'Desconocida' ?>
+            </div>
         </div>
-
-        <div style="width:20px; border-right: 1px solid #ccc;">
-            <img id="menu-contract" style="float:right; margin-left:2px; margin-right:2px;" src="libs/img/bzg-panel-contract.svg" class="biz-ex-svg-icon biz-ex-svg-toggle biz-ex-menu-visible-toggle biz-ex-menu-toggle-hide" alt="">
-            <img id="menu-expand" style="float:right; margin-left:2px; margin-right:2px;" src="libs/img/bzg-panel-expand.svg" class="biz-ex-svg-icon biz-ex-svg-toggle biz-ex-menu-visible-toggle biz-ex-menu-toggle-show" alt="">
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👤</div>
+                <div class="stat-title">Usuario Activo</div>
+                <div class="stat-value"><?= htmlspecialchars($usuario) ?></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🕐</div>
+                <div class="stat-title">Sesión Iniciada</div>
+                <div class="stat-value"><?= date('H:i', $login_time) ?></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-title">Fecha</div>
+                <div class="stat-value"><?= date('d/m/Y') ?></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🔒</div>
+                <div class="stat-title">Estado</div>
+                <div class="stat-value">Autenticado</div>
+            </div>
         </div>
-
-    <div id="iframe-container">
-            <div class="placeholder" id="placeholder">JML (Este texto se ocultará una vez que el iframe cargue)</div>
-            <iframe id="miIframe" title="Portal de Gestion" width="1140" height="541.25" src="https://pgoyn.skytel.com.ar/" frameborder="0" allowFullScreen="true"></iframe>
+        
+        <div class="tools-section">
+            <h2>🛠️ Herramientas Disponibles</h2>
+            <div class="tools-grid">
+                <div class="tool-card" onclick="window.location.href='herramientas/1.Cotizador/'">
+                    <div class="tool-icon">💰</div>
+                    <div class="tool-title">Cotizador</div>
+                    <div class="tool-description">Sistema de cotización de servicios</div>
+                </div>
+                
+                <div class="tool-card" onclick="alert('Próximamente...')">
+                    <div class="tool-icon">📊</div>
+                    <div class="tool-title">Reportes</div>
+                    <div class="tool-description">Análisis y reportes de gestión</div>
+                </div>
+                
+                <div class="tool-card" onclick="alert('Próximamente...')">
+                    <div class="tool-icon">⚙️</div>
+                    <div class="tool-title">Configuración</div>
+                    <div class="tool-description">Ajustes del sistema</div>
+                </div>
+                
+                <div class="tool-card" onclick="alert('Próximamente...')">
+                    <div class="tool-title">Admin</div>
+                    <div class="tool-description">Panel de administración</div>
+                </div>
+            </div>
         </div>
     </div>
-
+    
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // JavaScript para manejar los clics en los enlaces
-        const enlaces = document.querySelectorAll('#indice a');
-        const iframe = document.getElementById('miIframe');
-        const placeholder = document.getElementById('placeholder');
-      
-        enlaces.forEach(enlace => {
-            enlace.addEventListener('click', (event) => {
-                if (enlace.getAttribute('data-new-tab') === 'true') {
-                    // Si el enlace tiene el atributo data-new-tab, no hacemos nada para permitir la apertura en una nueva pestaña
-                    return;
-                }
-
-                event.preventDefault();
-                const url = enlace.href;
-                iframe.src = url;
-                iframe.style.display = 'block';
-                placeholder.style.display = 'none';
-            });
-        });
-
-        $('#menu-contract').on("click", function() {
-            $('#menu-contract').removeClass("biz-ex-menu-toggle-hide").addClass("biz-ex-menu-toggle-show");
-            $('#indice').hide();
-            $('#menu-expand').removeClass("biz-ex-menu-toggle-show").addClass("biz-ex-menu-toggle-hide");
-        });
-
-        $('#menu-expand').on("click", function() {           
-            $('#menu-expand').removeClass("biz-ex-menu-toggle-hide").addClass("biz-ex-menu-toggle-show");
-            $('#indice').show();
-            $('#menu-contract').removeClass("biz-ex-menu-toggle-show").addClass("biz-ex-menu-toggle-hide");
-        });
-    });
-</script>
-
+        // Auto-logout por inactividad (30 minutos)
+        let inactivityTimer;
+        const INACTIVITY_TIME = 30 * 60 * 1000; // 30 minutos en milisegundos
+        
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(function() {
+                alert('Tu sesión expirará por inactividad en 2 minutos. Haz clic en OK para mantenerla activa.');
+                setTimeout(function() {
+                    window.location.href = 'logout.php';
+                }, 2 * 60 * 1000); // 2 minutos más
+            }, INACTIVITY_TIME);
+        }
+        
+        // Eventos para detectar actividad
+        document.addEventListener('mousedown', resetInactivityTimer);
+        document.addEventListener('mousemove', resetInactivityTimer);
+        document.addEventListener('keypress', resetInactivityTimer);
+        document.addEventListener('scroll', resetInactivityTimer);
+        document.addEventListener('touchstart', resetInactivityTimer);
+        
+        // Iniciar el timer
+        resetInactivityTimer();
+        
+        console.log('Sistema de autenticación simplificado cargado correctamente');
+    </script>
 </body>
 </html>
