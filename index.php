@@ -18,7 +18,6 @@
     <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
-    <link rel="stylesheet" href="libs/css/portal-styles.css" type="text/css" /> -->
     <link href="libs/css/google-opensans.css" rel="stylesheet">
     <script src="libs/js/app/jquery.min.js"></script>
 
