@@ -1,11 +1,14 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Si no hay usuario logueado → mandar a login
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
-    exit;
+    exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -68,6 +71,10 @@ if (!isset($_SESSION['usuario'])) {
       </style>
 </head>
 <body>
+ <h1>Bienvenido <?php echo htmlspecialchars($_SESSION['usuario']); ?></h1>
+    <nav>
+        <a href="logout.php">Cerrar sesión</a>
+</nav>
 
     <div id="content">
         <div id="indice">
