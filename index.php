@@ -429,7 +429,7 @@ $user = $_SESSION['user'];
         <div id="indice">
             <a href="#" class="biz-ex-navigate biz-ex-logo-navigate" onclick="loadDashboard()">
                 <i class="biz-ex-logo-img"></i>
-                <div style="margin-top: 10px; font-weight: 600; color: #667eea;">Portal SkyTel</div>
+                <div style="margin-top: 10px; font-weight: 600; color: #667eea;">Transformación Digital</div>
             </a>
             
             <!-- Dashboard siempre visible -->
@@ -474,7 +474,7 @@ $user = $_SESSION['user'];
             <!-- Procesos -->
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('procesos')">
-                    ⚙️ Procesos Bizagi 
+                    ⚙️ Procesos 
                     <span class="toggle-icon rotated" id="procesos-icon">▼</span>
                 </h1>
                 <ul class="nav-bar collapsible-content collapsed" id="procesos-content">
@@ -506,7 +506,7 @@ $user = $_SESSION['user'];
             <!-- Capacitaciones -->
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('capacitaciones')">
-                    📚 Capacitaciones 
+                    📚 Videos 
                     <span class="toggle-icon" id="capacitaciones-icon">▼</span>
                 </h1>
                 <ul class="nav-bar collapsible-content" id="capacitaciones-content">
@@ -546,6 +546,7 @@ $user = $_SESSION['user'];
                     <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
                     <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
                     <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestión</div></a></li>
+                    <li><a href='https://agentevirtual.skytel.tech/' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Agentes Virtuales</div></a></li>
                 </ul>
             </div>
 
