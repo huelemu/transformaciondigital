@@ -462,7 +462,7 @@ $tipo_usuario = getTipoUsuario($domain);
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">⚙️</div>
-                <div class="stat-title">Procesos Bizagi</div>
+                <div class="stat-title">Procesos</div>
                 <div class="stat-value"><?= count($procesos) ?></div>
                 <div class="stat-description">Procesos disponibles</div>
             </div>
@@ -476,9 +476,9 @@ $tipo_usuario = getTipoUsuario($domain);
             
             <div class="stat-card">
                 <div class="stat-icon">📚</div>
-                <div class="stat-title">Capacitaciones</div>
+                <div class="stat-title">Videos</div>
                 <div class="stat-value"><?= count($capacitaciones) ?></div>
-                <div class="stat-description">Cursos disponibles</div>
+                <div class="stat-description">Temas disponibles</div>
             </div>
             
             <div class="stat-card">
@@ -532,7 +532,7 @@ $tipo_usuario = getTipoUsuario($domain);
                         💰 Cotizador
                     </div>
                     <div class="activity-description">
-                        Sistema completo de cotización de servicios. Gestiona costos, márgenes y genera presupuestos profesionales.
+                        Sistema minimalista de cotización de servicios. Gestiona costos, márgenes y genera presupuestos.
                     </div>
                 </div>
                 
@@ -541,13 +541,13 @@ $tipo_usuario = getTipoUsuario($domain);
                         📋 Procesos de Negocio
                     </div>
                     <div class="activity-description">
-                        Accede a todos los procesos Bizagi documentados. Flujos de trabajo, procedimientos y metodologías.
+                        Accede a los procesos documentados de SkyTel. Flujos de trabajo, procedimientos y metodologías.
                     </div>
                 </div>
                 
                 <div class="activity-card">
                     <div class="activity-title">
-                        📚 Centro de Capacitación
+                        📚 Centro Videos
                     </div>
                     <div class="activity-description">
                         Material de entrenamiento, videos tutoriales y recursos de aprendizaje para el equipo.
@@ -587,14 +587,14 @@ $tipo_usuario = getTipoUsuario($domain);
                 
                 <div class="tool-preview-card">
                     <div class="tool-icon">📚</div>
-                    <div class="tool-name">Capacitaciones</div>
+                    <div class="tool-name">Videos</div>
                     <div class="tool-count"><?= count($capacitaciones) ?> cursos</div>
                 </div>
                 
                 <div class="tool-preview-card">
                     <div class="tool-icon">🌐</div>
                     <div class="tool-name">Enlaces</div>
-                    <div class="tool-count">5 recursos</div>
+                    <div class="tool-count">Varios recursos</div>
                 </div>
             </div>
         </div>
