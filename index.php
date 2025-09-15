@@ -1,3 +1,23 @@
+<?php
+// Añadir al inicio del archivo para verificar autenticación
+require_once 'config.php';
+require_once 'session-manager.php';
+
+// Debug: Verificar estado de sesión
+error_log('Index.php loaded - Session debug: ' . json_encode(SessionManager::debug()));
+
+// DEBUG: Verificar estado de autenticación
+error_log("Index.php - Auth check");
+error_log("isAuthenticated(): " . (isAuthenticated() ? 'true' : 'false'));
+error_log("Session data: " . print_r($_SESSION, true));
+if (!isAuthenticated()) {
+    error_log("Not authenticated, redirecting to login");
+    header('Location: login.php');
+    exit();
+}
+
+requireAuth(); // Esto verificará que el usuario esté logueado
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,111 +26,117 @@
     <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
     <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
+    <link rel="stylesheet" href="libs/css/portal-styles.css" type="text/css" />
     <link href="libs/css/google-opensans.css" rel="stylesheet">
     <script src="libs/js/app/jquery.min.js"></script>
 
     <title>Procesos SkyTel</title>
-
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            height: 100vh;
-        }
-        header {
-            width: 100%;
-            padding: 10px;
-            background-color: #f4f4f4;
-            border-bottom: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        #content {
-            display: flex;
-            flex: 1;
-        }
-        #indice {
-            width: 300px;
-            /* border-right: 1px solid #ccc; */
-            padding: 5px;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-        #iframe-container {
-            width: 100%;
-            padding: 5px;
-            box-sizing: border-box;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .placeholder {
-            font-size: 24px;
-            text-align: center;
-            margin-top: 20%;
-        }   
-        #iframe-container .placeholder {
-            display: none; /* Oculta el placeholder inicialmente */
-        }
-        #iframe-container #miIframe:loaded + .placeholder {
-            display: block; /* Muestra el placeholder si el iframe no carga */
-        }
-      </style>
 </head>
 <body>
 
     <div id="content">
         <div id="indice">
-        <a href="#" class="biz-ex-navigate biz-ex-logo-navigate" onclick="location.reload()">
-            <i class="biz-ex-logo-img"></i>
-        </a>
-        <h1 class="biz-ex-title-process-jml">Procesos:</h1>
-        <ul class="nav-bar">
-        <?php
-            $directorio = "procesos";
-            $subdirectorios = [];
+            <div class="menu-content">
+                <a href="#" class="biz-ex-navigate biz-ex-logo-navigate" onclick="location.reload()">
+                    <i class="biz-ex-logo-img"></i>
+                </a>
+                <h1 class="biz-ex-title-process-jml">Procesos:</h1>
+                <ul class="nav-bar">
+                <?php
+                    $directorio = "procesos";
+                    $subdirectorios = [];
 
-            // Abrir el directorio y recoger todos los subdirectorios en un array
-            if (is_dir($directorio)) {
-                if ($dh = opendir($directorio)) {
-                    while (($subdirectorio = readdir($dh)) !== false) {
-                        if ($subdirectorio != "." && $subdirectorio != "..") {
-                            $subdirectorios[] = $subdirectorio;
+                    // Abrir el directorio y recoger todos los subdirectorios en un array
+                    if (is_dir($directorio)) {
+                        if ($dh = opendir($directorio)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != "..") {
+                                    $subdirectorios[] = $subdirectorio;
+                                }
+                            }
+                            closedir($dh);
                         }
                     }
-                    closedir($dh);
-                }
-            }
 
-            // Ordenar alfabéticamente el array de subdirectorios
-            sort($subdirectorios);
+                    // Ordenar alfabéticamente el array de subdirectorios
+                    sort($subdirectorios);
 
-            // Generar la lista ordenada
-            foreach ($subdirectorios as $subdirectorio) {
-                // Construimos la ruta completa al archivo index.html
-                $ruta_index = "$directorio/$subdirectorio/index.html";
-                echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
-            }
-        ?>
-  
-        <!-- <h1 class="biz-ex-title-process-jml">Oficina de Proyectos:</h1> -->
-        <!-- <li><a href='https://app.powerbi.com/view?r=eyJrIjoiMjcxYTNhYjktZTQ5OC00Y2MyLWJkOTgtNDRhNTcyZTg4ZTE1IiwidCI6IjFmNTNjYTlkLTg1YzItNDcwYS1iYTFiLTY5YzExNTcwZTI0NyIsImMiOjR9' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Tablero PMO</div></a></li> -->
+                    // Generar la lista ordenada
+                    foreach ($subdirectorios as $subdirectorio) {
+                        // Construimos la ruta completa al archivo index.html
+                        $ruta_index = "$directorio/$subdirectorio/index.html";
+                        echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                    }
+                ?>
+          
+                <!-- <h1 class="biz-ex-title-process-jml">Oficina de Proyectos:</h1> -->
+                <!-- <li><a href='https://app.powerbi.com/view?r=eyJrIjoiMjcxYTNhYjktZTQ5OC00Y2MyLWJkOTgtNDRhNTcyZTg4ZTE1IiwidCI6IjFmNTNjYTlkLTg1YzItNDcwYS1iYTFiLTY5YzExNTcwZTI0NyIsImMiOjR9' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Tablero PMO</div></a></li> -->
 
-        <h1 class="biz-ex-title-process-jml">Recursos Compartidos SkyTel:</h1>
-        <li><a href='https://sites.google.com/skytel.tech/gws/multimedia?authuser=0' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentaciones</div></a></li>
-        <li><a href='https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Alineacion...</div></a></li>
-        <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
-        <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
-        <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestion</div></a></li>
+                <h1 class="biz-ex-title-process-jml">Herramientas:</h1>
+                <li><a href='herramientas/1.Cotizador/index.php' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Cotizador</div></a></li>
 
+                <h1 class="biz-ex-title-process-jml">Capacitaciones:</h1>
+                <?php
+                    // Buscar capacitaciones en directorio específico
+                    $directorio_capacitaciones = "capacitaciones";
+                    if (is_dir($directorio_capacitaciones)) {
+                        $subdirectorios_cap = [];
+                        if ($dh = opendir($directorio_capacitaciones)) {
+                            while (($subdirectorio = readdir($dh)) !== false) {
+                                if ($subdirectorio != "." && $subdirectorio != "..") {
+                                    $subdirectorios_cap[] = $subdirectorio;
+                                }
+                            }
+                            closedir($dh);
+                        }
+                        sort($subdirectorios_cap);
+                        foreach ($subdirectorios_cap as $subdirectorio) {
+                            $ruta_index = "$directorio_capacitaciones/$subdirectorio/index.html";
+                            echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
+                        }
+                    } else {
+                        // Enlaces de capacitaciones como fallback si no existe el directorio
+                        echo "<li><a href='#' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Capacitaciones (próximamente)</div></a></li>";
+                    }
+                ?>
 
-        <!-- <h1 class="biz-ex-title-process-jml">Ayuda Memoria:</h1> -->
-        <!-- <li><a href='https://docs.google.com/presentation/d/11dTQCMk80yQFCJAR7RSSSNqE-TYukXfZmNjOTJy3g2o/edit?usp=sharing' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Transformacion</div></a></li> -->
-        <!-- <li><a href='https://docs.google.com/presentation/d/1jQZMtX5CJsDozaEDyojRRZdXvOrPKN9v/edit?usp=sharing&ouid=101540677606614220156&rtpof=true&sd=true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentacion Procesos</div></a></li> -->
+                <h1 class="biz-ex-title-process-jml">Recursos Compartidos SkyTel:</h1>
+                <li><a href='https://sites.google.com/skytel.tech/gws/multimedia?authuser=0' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentaciones</div></a></li>
+                <li><a href='https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Alineacion...</div></a></li>
+                <li><a href='https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Mapa de Procesos</div></a></li>
+                <li><a href='https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Contact Center</div></a></li>
+                <li><a href='https://sistemagestion.skytel.tech' target='_blank' data-new-tab='true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Sistema de Gestion</div></a></li>
 
-        </ul> 
+                <!-- <h1 class="biz-ex-title-process-jml">Ayuda Memoria:</h1> -->
+                <!-- <li><a href='https://docs.google.com/presentation/d/11dTQCMk80yQFCJAR7RSSSNqE-TYukXfZmNjOTJy3g2o/edit?usp=sharing' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Transformacion</div></a></li> -->
+                <!-- <li><a href='https://docs.google.com/presentation/d/1jQZMtX5CJsDozaEDyojRRZdXvOrPKN9v/edit?usp=sharing&ouid=101540677606614220156&rtpof=true&sd=true' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>Presentacion Procesos</div></a></li> -->
+
+                </ul>
+            </div>
+            
+            <!-- Sección de usuario al final del menú -->
+            <div class="user-section">
+                <div class="user-info">
+                    <?php if (isset($_SESSION['user']['picture']) && !empty($_SESSION['user']['picture'])): ?>
+                        <img src="<?= htmlspecialchars($_SESSION['user']['picture']) ?>" alt="Avatar" class="user-avatar" style="background: none;">
+                    <?php else: ?>
+                        <div class="user-avatar">
+                            <?= strtoupper(substr($_SESSION['user']['name'] ?? 'U', 0, 1)) ?>
+                        </div>
+                    <?php endif; ?>
+                    <div class="user-details">
+                        <div class="user-name"><?= htmlspecialchars($_SESSION['user']['name'] ?? 'Usuario') ?></div>
+                        <div class="user-email"><?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?></div>
+                    </div>
+                </div>
+                <a href="logout.php" class="logout-btn" onclick="return confirm('¿Estás seguro de que quieres cerrar sesión?')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17,8L15.59,6.59L13.17,9.01L13.17,2L11.17,2L11.17,9.01L8.75,6.59L7.34,8L12.17,12.83L17,8Z"/>
+                        <path d="M19,15V18C19,19.1 18.1,20 17,20H7C5.9,20 5,19.1 5,18V15H3V18C3,20.21 4.79,22 7,22H17C19.21,22 21,20.21 21,18V15H19Z"/>
+                    </svg>
+                    Cerrar Sesión
+                </a>
+            </div>
         </div>
 
         <div style="width:20px; border-right: 1px solid #ccc;">
@@ -134,6 +160,11 @@
             enlace.addEventListener('click', (event) => {
                 if (enlace.getAttribute('data-new-tab') === 'true') {
                     // Si el enlace tiene el atributo data-new-tab, no hacemos nada para permitir la apertura en una nueva pestaña
+                    return;
+                }
+
+                // Ignorar clics en el botón de logout
+                if (enlace.classList.contains('logout-btn')) {
                     return;
                 }
 
