@@ -160,6 +160,10 @@ function renderAlert($error_info, $domain = '') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Transformación Digital - SkyTel</title>
+    <link rel="stylesheet" href="libs/css/jquery/jquery.ui.css" type="text/css" />
+    <link rel="stylesheet" href="libs/css/bizagi-font.css" type="text/css" />
+    <link rel="stylesheet" href="libs/css/app.css" type="text/css" />
+    <link href="libs/css/google-opensans.css" rel="stylesheet">
     <style>
         @keyframes slideIn {
             from {
@@ -178,6 +182,11 @@ function renderAlert($error_info, $domain = '') {
             100% { transform: scale(1); }
         }
         
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -185,7 +194,7 @@ function renderAlert($error_info, $domain = '') {
             align-items: center;
             justify-content: center;
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Open Sans', sans-serif;
             padding: 20px;
         }
         
@@ -204,10 +213,30 @@ function renderAlert($error_info, $domain = '') {
             margin-bottom: 2rem;
         }
         
-        .logo h1 {
-            color: #667eea;
-            margin: 0;
-            font-size: 3rem;
+        .biz-ex-logo-img {
+            display: block;
+            width: 166px;
+            height: 55px;
+            margin: 0 auto 1rem auto;
+            background: url("libs/img/biz-ex-logo.png") no-repeat;
+            background-size: contain;
+        }
+        
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .biz-ex-logo-img {
+                background: url("libs/img/biz-ex-logo-2x.png") no-repeat;
+                background-size: contain;
+            }
+        }
+        
+        .welcome-text {
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-text h1 {
+            color: #333;
+            margin: 0 0 0.5rem 0;
+            font-size: 2.2rem;
             font-weight: 300;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
@@ -215,9 +244,9 @@ function renderAlert($error_info, $domain = '') {
             background-clip: text;
         }
         
-        .logo p {
+        .welcome-text p {
             color: #666;
-            margin: 0.5rem 0 0 0;
+            margin: 0;
             font-size: 1.1rem;
             font-weight: 300;
         }
@@ -248,6 +277,8 @@ function renderAlert($error_info, $domain = '') {
             border-color: #667eea;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             transform: translateY(-2px);
+            text-decoration: none;
+            color: #333;
         }
         
         .google-btn:active {
@@ -266,6 +297,7 @@ function renderAlert($error_info, $domain = '') {
             border-radius: 12px;
             margin-top: 2rem;
             border-left: 4px solid #667eea;
+            text-align: left;
         }
         
         .domains-info h4 {
@@ -281,7 +313,6 @@ function renderAlert($error_info, $domain = '') {
             color: #666;
             font-size: 0.9rem;
             line-height: 1.4;
-            text-align: left;
         }
         
         .domains-list div {
@@ -315,9 +346,10 @@ function renderAlert($error_info, $domain = '') {
             margin-right: 8px;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Alertas */
+        .alert {
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
         }
         
         @media (max-width: 500px) {
@@ -326,8 +358,13 @@ function renderAlert($error_info, $domain = '') {
                 margin: 10px;
             }
             
-            .logo h1 {
-                font-size: 2.5rem;
+            .welcome-text h1 {
+                font-size: 1.8rem;
+            }
+            
+            .biz-ex-logo-img {
+                width: 140px;
+                height: 46px;
             }
         }
     </style>
@@ -335,8 +372,12 @@ function renderAlert($error_info, $domain = '') {
 <body>
     <div class="login-container">
         <div class="logo">
-            <h1>SkyTel</h1>
-            <p>Transformación Digital</p>
+            <i class="biz-ex-logo-img"></i>
+        </div>
+        
+        <div class="welcome-text">
+            <h1>Bienvenido</h1>
+            <p>Transformación Digital - SkyTel</p>
         </div>
         
         <?= renderAlert($error_info, $domain) ?>
