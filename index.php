@@ -1,5 +1,5 @@
 <?php
-// index.php - Dashboard con Google OAuth simplificado
+// index.php - Dashboard con Google OAuth y Procesos Bizagi
 session_start();
 
 // Función simple para verificar autenticación
@@ -47,6 +47,30 @@ function formatearFecha($timestamp) {
     return date('d/m/Y H:i:s', $timestamp);
 }
 
+// Función para obtener directorios
+function obtenerDirectorios($directorio) {
+    $subdirectorios = [];
+    
+    if (is_dir($directorio)) {
+        if ($dh = opendir($directorio)) {
+            while (($subdirectorio = readdir($dh)) !== false) {
+                if ($subdirectorio != "." && $subdirectorio != ".." && is_dir("$directorio/$subdirectorio")) {
+                    $subdirectorios[] = $subdirectorio;
+                }
+            }
+            closedir($dh);
+        }
+    }
+    
+    sort($subdirectorios);
+    return $subdirectorios;
+}
+
+// Obtener listas de directorios
+$herramientas = obtenerDirectorios("herramientas");
+$procesos = obtenerDirectorios("procesos");
+$capacitaciones = obtenerDirectorios("capacitaciones");
+
 // Función para determinar el tipo de usuario
 function getTipoUsuario($domain) {
     switch ($domain) {
@@ -74,7 +98,7 @@ $tipo_usuario = getTipoUsuario($domain);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Transformación Digital - SkyTel</title>
+    <title>Portal SkyTel - Transformación Digital</title>
     <style>
         * {
             margin: 0;
@@ -86,6 +110,8 @@ $tipo_usuario = getTipoUsuario($domain);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f7fa;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
         .header {
@@ -99,7 +125,7 @@ $tipo_usuario = getTipoUsuario($domain);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -160,10 +186,94 @@ $tipo_usuario = getTipoUsuario($domain);
             transform: translateY(-1px);
         }
         
-        .container {
-            max-width: 1200px;
+        .main-content {
+            display: flex;
+            flex: 1;
+            max-width: 1400px;
             margin: 2rem auto;
+            gap: 2rem;
             padding: 0 2rem;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            padding: 2rem;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+        
+        .sidebar-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .section-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .section-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-link {
+            display: block;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .section-link:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: translateX(5px);
+            text-decoration: none;
+            color: #495057;
+        }
+        
+        .external-link {
+            position: relative;
+        }
+        
+        .external-link::after {
+            content: '🔗';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
         }
         
         .welcome-card {
@@ -171,7 +281,6 @@ $tipo_usuario = getTipoUsuario($domain);
             padding: 2.5rem;
             border-radius: 20px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
             position: relative;
             overflow: hidden;
         }
@@ -203,16 +312,10 @@ $tipo_usuario = getTipoUsuario($domain);
             font-weight: 600;
         }
         
-        .welcome-text p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-        
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 2rem;
         }
         
         .stat-card {
@@ -253,82 +356,52 @@ $tipo_usuario = getTipoUsuario($domain);
             border: 2px solid <?= $tipo_usuario['color'] ?>30;
         }
         
-        .tools-section {
+        .process-viewer {
             background: white;
-            padding: 2.5rem;
             border-radius: 20px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-        
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .section-header h2 {
-            color: #333;
-            font-weight: 600;
-        }
-        
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .tool-card {
-            background: #f8f9fa;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            cursor: pointer;
-            position: relative;
             overflow: hidden;
         }
         
-        .tool-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
+        .viewer-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
-        .tool-card:hover::before {
-            transform: scaleX(1);
+        .viewer-content {
+            height: 600px;
+            position: relative;
+            background: #f8f9fa;
         }
         
-        .tool-card:hover {
-            border-color: #667eea;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
-            background: white;
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
         
-        .tool-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
         
-        .tool-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.8rem;
-            font-size: 1.1rem;
-        }
-        
-        .tool-description {
+        .placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
             color: #666;
-            font-size: 0.9rem;
-            line-height: 1.4;
+        }
+        
+        .placeholder h3 {
+            margin-bottom: 1rem;
+            color: #333;
         }
         
         .session-info {
@@ -350,10 +423,6 @@ $tipo_usuario = getTipoUsuario($domain);
             font-size: 0.9rem;
         }
         
-        .session-item strong {
-            color: #1a365d;
-        }
-        
         .activity-indicator {
             display: inline-block;
             width: 8px;
@@ -370,6 +439,35 @@ $tipo_usuario = getTipoUsuario($domain);
             100% { opacity: 1; }
         }
         
+        .toggle-sidebar {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+        }
+        
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -382,27 +480,31 @@ $tipo_usuario = getTipoUsuario($domain);
                 gap: 0.5rem;
             }
             
-            .container {
+            .main-content {
                 padding: 0 1rem;
             }
             
-            .welcome-header {
-                flex-direction: column;
-                text-align: center;
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                height: 100vh;
+                z-index: 999;
+                transition: left 0.3s ease;
+                overflow-y: auto;
             }
             
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            .sidebar.show {
+                left: 0;
             }
             
-            .session-info {
-                grid-template-columns: 1fr;
+            .toggle-sidebar {
+                display: block;
             }
-        }
-        
-        .status-online {
-            color: #28a745;
-            font-weight: 600;
+            
+            .viewer-content {
+                height: 400px;
+            }
         }
     </style>
 </head>
@@ -411,7 +513,7 @@ $tipo_usuario = getTipoUsuario($domain);
         <div class="header-content">
             <div class="logo">
                 <h1>SkyTel</h1>
-                <p>Transformación Digital</p>
+                <p>Portal de Transformación Digital</p>
             </div>
             <div class="user-info">
                 <?php if (!empty($picture)): ?>
@@ -430,186 +532,251 @@ $tipo_usuario = getTipoUsuario($domain);
         </div>
     </header>
     
-    <div class="container">
-        <div class="welcome-card">
-            <div class="welcome-header">
-                <div class="welcome-icon">🎉</div>
-                <div class="welcome-text">
-                    <h2>¡Bienvenido, <?= htmlspecialchars(explode(' ', $nombre)[0]) ?>!</h2>
-                    <p>Has iniciado sesión correctamente en el sistema de Transformación Digital de SkyTel.</p>
-                </div>
+    <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+    
+    <div class="main-content">
+        <aside class="sidebar" id="sidebar">
+            <!-- Herramientas -->
+            <div class="sidebar-section">
+                <h3 class="section-title">
+                    🛠️ Herramientas
+                </h3>
+                <ul class="section-list">
+                    <?php foreach ($herramientas as $herramienta): ?>
+                        <li class="section-item">
+                            <a href="herramientas/<?= urlencode($herramienta) ?>/" class="section-link">
+                                <?= htmlspecialchars($herramienta) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
             
-            <div class="session-info">
-                <div class="session-item">
-                    <span class="activity-indicator"></span>
-                    <strong>Estado:</strong> <span class="status-online">En línea</span>
-                </div>
-                <div class="session-item">
-                    👤 <strong>Usuario:</strong> <?= htmlspecialchars($nombre) ?>
-                </div>
-                <div class="session-item">
-                    📧 <strong>Email:</strong> <?= htmlspecialchars($email) ?>
-                </div>
-                <div class="session-item">
-                    🏢 <strong>Organización:</strong> <?= htmlspecialchars($domain) ?>
-                </div>
-                <div class="session-item">
-                    🕐 <strong>Ingreso:</strong> <?= formatearFecha($login_time) ?>
-                </div>
-                <div class="session-item">
-                    🌐 <strong>IP:</strong> <?= $_SERVER['REMOTE_ADDR'] ?? 'Desconocida' ?>
-                </div>
+            <!-- Procesos Bizagi -->
+            <div class="sidebar-section">
+                <h3 class="section-title">
+                    ⚙️ Procesos Bizagi
+                </h3>
+                <ul class="section-list">
+                    <?php foreach ($procesos as $proceso): ?>
+                        <li class="section-item">
+                            <a href="#" class="section-link process-link" 
+                               data-url="procesos/<?= urlencode($proceso) ?>/index.html">
+                                <?= htmlspecialchars($proceso) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
-        </div>
+            
+            <!-- Capacitaciones -->
+            <div class="sidebar-section">
+                <h3 class="section-title">
+                    📚 Capacitaciones
+                </h3>
+                <ul class="section-list">
+                    <?php foreach ($capacitaciones as $capacitacion): ?>
+                        <li class="section-item">
+                            <a href="#" class="section-link process-link" 
+                               data-url="capacitaciones/<?= urlencode($capacitacion) ?>/index.html">
+                                <?= htmlspecialchars($capacitacion) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            
+            <!-- Recursos Compartidos -->
+            <div class="sidebar-section">
+                <h3 class="section-title">
+                    🌐 Recursos SkyTel
+                </h3>
+                <ul class="section-list">
+                    <li class="section-item">
+                        <a href="https://sites.google.com/skytel.tech/gws/multimedia?authuser=0" 
+                           target="_blank" class="section-link external-link">
+                            Presentaciones
+                        </a>
+                    </li>
+                    <li class="section-item">
+                        <a href="https://docs.google.com/spreadsheets/d/1Q5wFyJzWCCa-pXd2-4Ij6th8qyEGAr9Crnam8HvCjYQ/edit?gid=0#gid=0" 
+                           target="_blank" class="section-link external-link">
+                            Alineación
+                        </a>
+                    </li>
+                    <li class="section-item">
+                        <a href="https://docs.google.com/spreadsheets/d/1sfQt0OiVdjXrblLBhWgSL0CmLk_MzaVKON6xh6nGbNk/edit?gid=1681975588#gid=1681975588" 
+                           target="_blank" class="section-link external-link">
+                            Mapa de Procesos
+                        </a>
+                    </li>
+                    <li class="section-item">
+                        <a href="https://skytel.atlassian.net/servicedesk/customer/portal/24/article/1067614280" 
+                           target="_blank" class="section-link external-link">
+                            Contact Center
+                        </a>
+                    </li>
+                    <li class="section-item">
+                        <a href="https://sistemagestion.skytel.tech" 
+                           target="_blank" class="section-link external-link">
+                            Sistema de Gestión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
         
-        <div class="stats-grid">
-            <div class="stat-card user-type-card">
-                <div class="stat-icon"><?= $tipo_usuario['icon'] ?></div>
-                <div class="stat-title">Tipo de Usuario</div>
-                <div class="stat-value"><?= $tipo_usuario['tipo'] ?></div>
+        <main class="content-area">
+            <div class="welcome-card">
+                <div class="welcome-header">
+                    <div class="welcome-icon">🎯</div>
+                    <div class="welcome-text">
+                        <h2>Portal de Transformación Digital</h2>
+                        <p>Accede a procesos Bizagi, herramientas y recursos compartidos desde una plataforma unificada</p>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card user-type-card">
+                        <div class="stat-icon"><?= $tipo_usuario['icon'] ?></div>
+                        <div class="stat-title">Tipo de Usuario</div>
+                        <div class="stat-value"><?= $tipo_usuario['tipo'] ?></div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">⚙️</div>
+                        <div class="stat-title">Procesos Bizagi</div>
+                        <div class="stat-value"><?= count($procesos) ?></div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🛠️</div>
+                        <div class="stat-title">Herramientas</div>
+                        <div class="stat-value"><?= count($herramientas) ?></div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-title">Capacitaciones</div>
+                        <div class="stat-value"><?= count($capacitaciones) ?></div>
+                    </div>
+                </div>
+                
+                <div class="session-info">
+                    <div class="session-item">
+                        <span class="activity-indicator"></span>
+                        <strong>Estado:</strong> <span style="color: #28a745; font-weight: 600;">En línea</span>
+                    </div>
+                    <div class="session-item">
+                        👤 <strong>Usuario:</strong> <?= htmlspecialchars($nombre) ?>
+                    </div>
+                    <div class="session-item">
+                        🏢 <strong>Organización:</strong> <?= htmlspecialchars($domain) ?>
+                    </div>
+                    <div class="session-item">
+                        🕐 <strong>Sesión:</strong> <?= formatearFecha($login_time) ?>
+                    </div>
+                </div>
             </div>
             
-            <div class="stat-card">
-                <div class="stat-icon">🕐</div>
-                <div class="stat-title">Sesión Iniciada</div>
-                <div class="stat-value"><?= date('H:i', $login_time) ?></div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">📅</div>
-                <div class="stat-title">Fecha</div>
-                <div class="stat-value"><?= date('d/m/Y') ?></div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">🔒</div>
-                <div class="stat-title">Seguridad</div>
-                <div class="stat-value">OAuth 2.0</div>
-            </div>
-        </div>
-        
-        <div class="tools-section">
-            <div class="section-header">
-                <div style="font-size: 2rem;">🛠️</div>
-                <h2>Herramientas Disponibles</h2>
-            </div>
-            
-            <div class="tools-grid">
-                <div class="tool-card" onclick="window.location.href='herramientas/1.Cotizador/'">
-                    <div class="tool-icon">💰</div>
-                    <div class="tool-title">Cotizador</div>
-                    <div class="tool-description">Sistema completo de cotización de servicios y productos</div>
+            <div class="process-viewer">
+                <div class="viewer-header">
+                    <div style="font-size: 1.5rem;">📋</div>
+                    <div>
+                        <h3>Visor de Procesos</h3>
+                        <p style="opacity: 0.9; margin: 0;">Selecciona un proceso o herramienta del menú lateral</p>
+                    </div>
                 </div>
-                
-                <div class="tool-card" onclick="showComingSoon('Reportes')">
-                    <div class="tool-icon">📊</div>
-                    <div class="tool-title">Reportes</div>
-                    <div class="tool-description">Análisis avanzados y reportes de gestión empresarial</div>
-                </div>
-                
-                <div class="tool-card" onclick="showComingSoon('Configuración')">
-                    <div class="tool-icon">⚙️</div>
-                    <div class="tool-title">Configuración</div>
-                    <div class="tool-description">Ajustes y personalización del sistema</div>
-                </div>
-                
-                <div class="tool-card" onclick="showComingSoon('CRM')">
-                    <div class="tool-icon">👥</div>
-                    <div class="tool-title">CRM</div>
-                    <div class="tool-description">Gestión de clientes y relaciones comerciales</div>
-                </div>
-                
-                <div class="tool-card" onclick="showComingSoon('Proyectos')">
-                    <div class="tool-icon">📋</div>
-                    <div class="tool-title">Proyectos</div>
-                    <div class="tool-description">Gestión y seguimiento de proyectos</div>
-                </div>
-                
-                <div class="tool-card" onclick="showComingSoon('Soporte')">
-                    <div class="tool-icon">🎧</div>
-                    <div class="tool-title">Soporte</div>
-                    <div class="tool-description">Centro de ayuda y soporte técnico</div>
+                <div class="viewer-content">
+                    <div class="iframe-container">
+                        <div class="placeholder" id="placeholder">
+                            <h3>🚀 Bienvenido al Portal SkyTel</h3>
+                            <p>Selecciona un proceso, herramienta o capacitación del menú lateral para comenzar</p>
+                            <p style="margin-top: 1rem; opacity: 0.7;">
+                                💡 Los procesos se cargarán aquí automáticamente
+                            </p>
+                        </div>
+                        <iframe id="processFrame" style="display: none;"></iframe>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
     
     <script>
+        // Manejo del iframe para procesos
+        document.addEventListener('DOMContentLoaded', function() {
+            const processLinks = document.querySelectorAll('.process-link');
+            const iframe = document.getElementById('processFrame');
+            const placeholder = document.getElementById('placeholder');
+            
+            processLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('data-url');
+                    const title = this.textContent.trim();
+                    
+                    if (url) {
+                        iframe.src = url;
+                        iframe.style.display = 'block';
+                        placeholder.style.display = 'none';
+                        
+                        // Actualizar título del visor
+                        const viewerTitle = document.querySelector('.viewer-header h3');
+                        viewerTitle.textContent = title;
+                        
+                        // Cerrar sidebar en móvil
+                        if (window.innerWidth <= 768) {
+                            document.getElementById('sidebar').classList.remove('show');
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Toggle sidebar en móvil
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        // Cerrar sidebar al hacer click fuera en móvil
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.querySelector('.toggle-sidebar');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target) && 
+                !toggleBtn.contains(e.target) &&
+                sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+        
         // Auto-logout por inactividad (30 minutos)
         let inactivityTimer;
-        const INACTIVITY_TIME = 30 * 60 * 1000; // 30 minutos en milisegundos
+        const INACTIVITY_TIME = 30 * 60 * 1000;
         
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(function() {
-                if (confirm('Tu sesión expirará por inactividad en 2 minutos.\n¿Deseas mantener la sesión activa?')) {
-                    resetInactivityTimer(); // Reiniciar si el usuario acepta
+                if (confirm('Tu sesión expirará por inactividad.\n¿Deseas mantener la sesión activa?')) {
+                    resetInactivityTimer();
                 } else {
                     window.location.href = 'logout.php';
                 }
             }, INACTIVITY_TIME);
         }
         
-        // Eventos para detectar actividad del usuario
-        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-        events.forEach(event => {
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
             document.addEventListener(event, resetInactivityTimer, true);
         });
         
-        // Iniciar el timer de inactividad
         resetInactivityTimer();
         
-        // Función para mostrar mensaje de "próximamente"
-        function showComingSoon(feature) {
-            const messages = [
-                `🚀 ${feature} estará disponible próximamente`,
-                `⏳ Estamos trabajando en ${feature}`,
-                `🔧 ${feature} en desarrollo`,
-                `✨ ${feature} llegará pronto`
-            ];
-            
-            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-            
-            // Crear notificación moderna
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 15px 20px;
-                border-radius: 10px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                z-index: 1000;
-                font-family: inherit;
-                font-weight: 500;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            `;
-            notification.textContent = randomMessage;
-            
-            document.body.appendChild(notification);
-            
-            // Animar entrada
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Remover después de 3 segundos
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 3000);
-        }
-        
-        // Log para debug
-        console.log('Dashboard con Google OAuth cargado correctamente');
-        console.log('Usuario:', '<?= addslashes($nombre) ?>');
-        console.log('Dominio:', '<?= addslashes($domain) ?>');
+        console.log('Portal SkyTel cargado correctamente');
+        console.log('Procesos disponibles:', <?= json_encode($procesos) ?>);
+        console.log('Herramientas disponibles:', <?= json_encode($herramientas) ?>);
     </script>
 </body>
 </html>
