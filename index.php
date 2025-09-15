@@ -71,6 +71,27 @@ $user = $_SESSION['user'];
             overflow-y: auto;
             background: #f8f9fa;
             border-right: 1px solid #dee2e6;
+            height: 100vh;
+            max-height: 100vh;
+        }
+        
+        /* Personalizar scrollbar */
+        #indice::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #indice::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        #indice::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        #indice::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
         
         #iframe-container {
@@ -358,6 +379,13 @@ $user = $_SESSION['user'];
             margin-bottom: 0;
         }
         
+        /* Secciones contraídas por defecto */
+        .collapsible-content.default-collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+        
         .collapsible-content li {
             animation: slideInFromLeft 0.3s ease;
         }
@@ -409,9 +437,9 @@ $user = $_SESSION['user'];
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('herramientas')">
                     🛠️ Herramientas 
-                    <span class="toggle-icon" id="herramientas-icon">▼</span>
+                    <span class="toggle-icon rotated" id="herramientas-icon">▼</span>
                 </h1>
-                <ul class="nav-bar collapsible-content" id="herramientas-content">
+                <ul class="nav-bar collapsible-content default-collapsed" id="herramientas-content">
                     <?php
                     $directorio = "herramientas";
                     $subdirectorios = [];
@@ -441,9 +469,9 @@ $user = $_SESSION['user'];
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('procesos')">
                     ⚙️ Procesos Bizagi 
-                    <span class="toggle-icon" id="procesos-icon">▼</span>
+                    <span class="toggle-icon rotated" id="procesos-icon">▼</span>
                 </h1>
-                <ul class="nav-bar collapsible-content" id="procesos-content">
+                <ul class="nav-bar collapsible-content default-collapsed" id="procesos-content">
                     <?php
                     $directorio = "procesos";
                     $subdirectorios = [];
@@ -498,9 +526,6 @@ $user = $_SESSION['user'];
                         echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
                     }
                     ?>
-                </ul>
-            </div>
-
             <!-- Recursos Compartidos SkyTel -->
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('recursos')">
@@ -624,8 +649,8 @@ $user = $_SESSION['user'];
             const content = document.getElementById(sectionName + '-content');
             const icon = document.getElementById(sectionName + '-icon');
             
-            if (content.classList.contains('collapsed')) {
-                content.classList.remove('collapsed');
+            if (content.classList.contains('collapsed') || content.classList.contains('default-collapsed')) {
+                content.classList.remove('collapsed', 'default-collapsed');
                 icon.classList.remove('rotated');
             } else {
                 content.classList.add('collapsed');
