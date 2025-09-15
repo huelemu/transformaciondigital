@@ -229,6 +229,11 @@
                     return;
                 }
 
+                // Ignorar clics en el botón de logout
+                if (enlace.classList.contains('logout-btn')) {
+                    return;
+                }
+
                 event.preventDefault();
                 const url = enlace.href;
                 iframe.src = url;
