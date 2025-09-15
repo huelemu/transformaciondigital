@@ -532,6 +532,8 @@ $user = $_SESSION['user'];
                         echo "<li><a href='$ruta_index' class='biz-ex-navigate'><div class='truncate-text biz-ex-menu'>$subdirectorio</div></a></li>";
                     }
                     ?>
+                    </ul>
+                </div>
             <!-- Recursos Compartidos SkyTel -->
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('recursos')">
