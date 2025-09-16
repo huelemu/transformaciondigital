@@ -1,325 +1,205 @@
 <?php
-// exportar.php - Versión corregida sin errores de sintaxis
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// exportar.php - Versión sin errores de PhpSpreadsheet
+error_reporting(E_ERROR | E_WARNING | E_PARSE); // Ocultar notices
 
-// DECLARACIONES USE AL PRINCIPIO
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-
-// Verificar que se enviaron datos
 if (!isset($_POST['data']) || empty($_POST['data'])) {
     die('Error: No se recibieron datos para exportar.');
 }
 
-// Intentar cargar PhpSpreadsheet
+// Intentar PhpSpreadsheet pero con fallback inmediato si hay problemas
+$useExcel = false;
 $autoloadPaths = [
     __DIR__ . '/../../vendor/autoload.php',
     __DIR__ . '/../../../vendor/autoload.php',
     __DIR__ . '/vendor/autoload.php'
 ];
 
-$autoloadFound = false;
 foreach ($autoloadPaths as $path) {
     if (file_exists($path)) {
-        require $path;
-        $autoloadFound = true;
+        try {
+            require_once $path;
+            if (class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
+                $useExcel = true;
+            }
+        } catch (Exception $e) {
+            // Si hay cualquier error, usar CSV
+            $useExcel = false;
+        }
         break;
     }
 }
 
-if (!$autoloadFound) {
-    // Si no hay PhpSpreadsheet, crear CSV como alternativa
-    crearCSV();
-    exit;
+// Decodificar datos una sola vez
+$rawData = json_decode($_POST['data'], true);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    die('Error: Datos JSON inválidos - ' . json_last_error_msg());
 }
 
-try {
-    // Verificar que PhpSpreadsheet esté disponible
-    if (!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
-        throw new Exception('PhpSpreadsheet no está disponible');
+// Extraer información común
+$cliente = $rawData['cliente'] ?? 'Cliente no especificado';
+$proyecto = $rawData['proyecto'] ?? 'Proyecto no especificado';
+$margen = $rawData['margen'] ?? '50';
+$fecha = $rawData['fecha'] ?? date('d/m/Y');
+$hora = $rawData['hora'] ?? date('H:i:s');
+$items = $rawData['items'] ?? $rawData;
+
+// Decidir formato según capacidades
+if ($useExcel) {
+    try {
+        crearExcelSeguro();
+    } catch (Exception $e) {
+        // Si falla Excel, usar CSV
+        crearCSV();
     }
-    
-    crearExcel();
-    
-} catch (Exception $e) {
-    // Si falla Excel, crear CSV como respaldo
-    error_log('Error al crear Excel: ' . $e->getMessage());
+} else {
     crearCSV();
 }
 
-function crearExcel() {
-    // Decodificar datos
-    $rawData = json_decode($_POST['data'], true);
+function crearExcelSeguro() {
+    global $cliente, $proyecto, $margen, $fecha, $hora, $items;
     
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        throw new Exception('Error al decodificar JSON: ' . json_last_error_msg());
-    }
-
-    // Extraer información
-    $cliente = $rawData['cliente'] ?? 'Cliente no especificado';
-    $proyecto = $rawData['proyecto'] ?? 'Proyecto no especificado';
-    $margen = $rawData['margen'] ?? '50';
-    $fecha = $rawData['fecha'] ?? date('d/m/Y');
-    $hora = $rawData['hora'] ?? date('H:i:s');
-    $items = $rawData['items'] ?? $rawData; // Compatibilidad con formato anterior
-
-    // Crear nuevo spreadsheet
+    // Importar clases solo cuando las necesitemos
+    use PhpOffice\PhpSpreadsheet\Spreadsheet;
+    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+    use PhpOffice\PhpSpreadsheet\Style\Alignment;
+    use PhpOffice\PhpSpreadsheet\Style\Border;
+    use PhpOffice\PhpSpreadsheet\Style\Fill;
+    
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle('Cotización');
-
-    // Configurar información del documento
+    
+    // Configurar propiedades básicas
     $spreadsheet->getProperties()
         ->setCreator('SkyTel Cotizador')
-        ->setTitle('Cotización - ' . $cliente)
-        ->setSubject('Cotización generada automáticamente')
-        ->setDescription('Cotización creada el ' . $fecha . ' a las ' . $hora);
-
-    // ENCABEZADO PRINCIPAL
+        ->setTitle('Cotización - ' . $cliente);
+    
+    // ENCABEZADO SIMPLE
     $sheet->setCellValue('A1', 'COTIZACIÓN SKYTEL');
-    $sheet->mergeCells('A1:I1');
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-    $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-    // INFORMACIÓN DEL CLIENTE
-    $currentRow = 3;
-    $sheet->setCellValue('A' . $currentRow, 'INFORMACIÓN GENERAL');
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(12);
     
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Cliente:');
-    $sheet->setCellValue('B' . $currentRow, $cliente);
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
+    // INFORMACIÓN BÁSICA
+    $sheet->setCellValue('A3', 'Cliente: ' . $cliente);
+    $sheet->setCellValue('A4', 'Proyecto: ' . $proyecto);
+    $sheet->setCellValue('A5', 'Fecha: ' . $fecha);
+    $sheet->setCellValue('A6', 'Margen: ' . $margen . '%');
     
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Proyecto:');
-    $sheet->setCellValue('B' . $currentRow, $proyecto);
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-    
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Fecha:');
-    $sheet->setCellValue('B' . $currentRow, $fecha);
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-    
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Margen aplicado:');
-    $sheet->setCellValue('B' . $currentRow, $margen . '%');
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-
-    // ENCABEZADOS DE LA TABLA
-    $currentRow += 2;
-    $headers = [
-        'Tipo Costo', 'Recurrencia', 'Categoría', 'Tipo Producto', 
-        'Descripción', 'Costo USD', 'Cantidad', 'Subtotal', 'Precio Venta'
-    ];
-    
-    $headerRow = $currentRow;
-    foreach ($headers as $index => $header) {
-        $column = chr(65 + $index); // A, B, C, etc.
-        $sheet->setCellValue($column . $headerRow, $header);
+    // ENCABEZADOS DE TABLA (fila 8)
+    $headers = ['Tipo', 'Categoría', 'Item', 'Costo USD', 'Cantidad', 'Subtotal', 'Precio Venta'];
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . '8', $header);
+        $sheet->getStyle($col . '8')->getFont()->setBold(true);
+        $col++;
     }
     
-    // Estilo para encabezados
-    $sheet->getStyle('A' . $headerRow . ':I' . $headerRow)->applyFromArray([
-        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-        'fill' => [
-            'fillType' => Fill::FILL_SOLID,
-            'startColor' => ['rgb' => '2563EB']
-        ],
-        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        'borders' => [
-            'allBorders' => ['borderStyle' => Border::BORDER_THIN]
-        ]
-    ]);
-
-    // DATOS DE LA TABLA
-    $currentRow++;
+    // DATOS - Convertir todo a string para evitar errores de tipo
+    $row = 9;
     $total = 0;
-    $totalCosto = 0;
     
     foreach ($items as $item) {
-        // Asegurar que todos los campos existen
-        $tipo = $item['tipo_costo'] ?? $item['tipo'] ?? '';
-        $recurrencia = $item['recurrencia'] ?? '';
-        $categoria = $item['categoria'] ?? '';
-        $tipoProd = $item['tipo_prod'] ?? $item['tipoProd'] ?? '';
-        $descripcion = $item['item'] ?? '';
-        $costoUSD = floatval($item['costoUSD'] ?? 0);
-        $cantidad = intval($item['cantidad'] ?? 0);
-        $subtotal = floatval($item['subtotal'] ?? 0);
-        $precioVenta = floatval($item['precioVenta'] ?? 0);
-
-        $sheet->fromArray([
-            $tipo,
-            $recurrencia,
-            $categoria,
-            $tipoProd,
-            $descripcion,
-            $costoUSD,
-            $cantidad,
-            $subtotal,
-            $precioVenta
-        ], null, 'A' . $currentRow);
-
-        // Formatear números
-        $sheet->getStyle('F' . $currentRow)->getNumberFormat()->setFormatCode('$#,##0.0000');
-        $sheet->getStyle('H' . $currentRow)->getNumberFormat()->setFormatCode('$#,##0.00');
-        $sheet->getStyle('I' . $currentRow)->getNumberFormat()->setFormatCode('$#,##0.00');
-
-        $total += $precioVenta;
-        $totalCosto += $subtotal;
-        $currentRow++;
+        $tipo = (string)($item['tipo_costo'] ?? $item['tipo'] ?? '');
+        $categoria = (string)($item['categoria'] ?? '');
+        $itemDesc = (string)($item['item'] ?? '');
+        $costoUSD = (string)number_format(floatval($item['costoUSD'] ?? 0), 4);
+        $cantidad = (string)intval($item['cantidad'] ?? 0);
+        $subtotal = (string)number_format(floatval($item['subtotal'] ?? 0), 2);
+        $precioVenta = (string)number_format(floatval($item['precioVenta'] ?? 0), 2);
+        
+        // Insertar como strings para evitar errores de tipo
+        $sheet->setCellValueExplicit('A' . $row, $tipo, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B' . $row, $categoria, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('C' . $row, $itemDesc, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('D' . $row, '$' . $costoUSD, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('E' . $row, $cantidad, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('F' . $row, '$' . $subtotal, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('G' . $row, '$' . $precioVenta, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        
+        $total += floatval($item['precioVenta'] ?? 0);
+        $row++;
     }
-
-    // FILA DE TOTALES
-    $currentRow++;
-    $sheet->setCellValue('G' . $currentRow, 'TOTALES:');
-    $sheet->setCellValue('H' . $currentRow, $totalCosto);
-    $sheet->setCellValue('I' . $currentRow, $total);
     
-    // Estilo para totales
-    $sheet->getStyle('G' . $currentRow . ':I' . $currentRow)->applyFromArray([
-        'font' => ['bold' => true, 'size' => 12],
-        'fill' => [
-            'fillType' => Fill::FILL_SOLID,
-            'startColor' => ['rgb' => 'F3F4F6']
-        ],
-        'borders' => [
-            'allBorders' => ['borderStyle' => Border::BORDER_THICK]
-        ]
-    ]);
+    // TOTAL
+    $sheet->setCellValue('F' . $row, 'TOTAL:');
+    $sheet->setCellValue('G' . $row, '$' . number_format($total, 2));
+    $sheet->getStyle('F' . $row . ':G' . $row)->getFont()->setBold(true);
     
-    $sheet->getStyle('H' . $currentRow . ':I' . $currentRow)->getNumberFormat()->setFormatCode('$#,##0.00');
-
-    // RESUMEN ADICIONAL
-    $currentRow += 2;
-    $sheet->setCellValue('A' . $currentRow, 'RESUMEN');
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(12);
-    
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Items cotizados:');
-    $sheet->setCellValue('B' . $currentRow, count($items));
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-    
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Costo total:');
-    $sheet->setCellValue('B' . $currentRow, '$' . number_format($totalCosto, 2));
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-    
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Precio de venta:');
-    $sheet->setCellValue('B' . $currentRow, '$' . number_format($total, 2));
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-
-    // AJUSTAR ANCHO DE COLUMNAS
-    foreach (range('A', 'I') as $col) {
+    // Auto-ajustar columnas
+    foreach (range('A', 'G') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
-
-    // Aplicar bordes a toda la tabla de datos
-    $sheet->getStyle('A' . $headerRow . ':I' . ($currentRow - 6))->applyFromArray([
-        'borders' => [
-            'allBorders' => ['borderStyle' => Border::BORDER_THIN]
-        ]
-    ]);
-
-    // GENERAR ARCHIVO
-    $writer = new Xlsx($spreadsheet);
     
-    // Crear nombre de archivo único
+    // Generar archivo
+    $writer = new Xlsx($spreadsheet);
     $clienteSlug = preg_replace('/[^a-zA-Z0-9]/', '_', $cliente);
-    $fechaSlug = date('Y-m-d_H-i');
-    $filename = "Cotizacion_{$clienteSlug}_{$fechaSlug}.xlsx";
-
-    // Headers para descarga
+    $filename = "Cotizacion_{$clienteSlug}_" . date('Y-m-d_H-i') . ".xlsx";
+    
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
-    header('Cache-Control: max-age=1');
-    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-    header('Cache-Control: cache, must-revalidate');
-    header('Pragma: public');
-
+    
     $writer->save('php://output');
 }
 
 function crearCSV() {
-    // Función de respaldo para crear CSV si Excel falla
-    $rawData = json_decode($_POST['data'], true);
+    global $cliente, $proyecto, $margen, $fecha, $hora, $items;
     
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        die('Error: Datos JSON inválidos');
-    }
-
-    // Extraer información
-    $cliente = $rawData['cliente'] ?? 'Cliente no especificado';
-    $proyecto = $rawData['proyecto'] ?? 'Proyecto no especificado';
-    $margen = $rawData['margen'] ?? '50';
-    $fecha = $rawData['fecha'] ?? date('d/m/Y');
-    $items = $rawData['items'] ?? $rawData;
-
-    // Crear nombre de archivo
     $clienteSlug = preg_replace('/[^a-zA-Z0-9]/', '_', $cliente);
-    $fechaSlug = date('Y-m-d_H-i');
-    $filename = "Cotizacion_{$clienteSlug}_{$fechaSlug}.csv";
-
-    // Headers para descarga CSV
+    $filename = "Cotizacion_{$clienteSlug}_" . date('Y-m-d_H-i') . ".csv";
+    
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
-
-    // Crear archivo CSV
+    
     $output = fopen('php://output', 'w');
     
     // BOM para UTF-8
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-
-    // Información del cliente
-    fputcsv($output, ['COTIZACIÓN SKYTEL'], ';');
-    fputcsv($output, [''], ';');
-    fputcsv($output, ['Cliente', $cliente], ';');
-    fputcsv($output, ['Proyecto', $proyecto], ';');
-    fputcsv($output, ['Fecha', $fecha], ';');
-    fputcsv($output, ['Margen', $margen . '%'], ';');
-    fputcsv($output, [''], ';');
-
+    
+    // Información básica
+    fputcsv($output, ['COTIZACIÓN SKYTEL']);
+    fputcsv($output, ['']);
+    fputcsv($output, ['Cliente:', $cliente]);
+    fputcsv($output, ['Proyecto:', $proyecto]);
+    fputcsv($output, ['Fecha:', $fecha]);
+    fputcsv($output, ['Hora:', $hora]);
+    fputcsv($output, ['Margen:', $margen . '%']);
+    fputcsv($output, ['']);
+    
     // Encabezados
     fputcsv($output, [
         'Tipo Costo', 'Recurrencia', 'Categoría', 'Tipo Producto', 
         'Descripción', 'Costo USD', 'Cantidad', 'Subtotal', 'Precio Venta'
-    ], ';');
-
+    ]);
+    
     // Datos
     $total = 0;
     foreach ($items as $item) {
-        $tipo = $item['tipo_costo'] ?? $item['tipo'] ?? '';
-        $recurrencia = $item['recurrencia'] ?? '';
-        $categoria = $item['categoria'] ?? '';
-        $tipoProd = $item['tipo_prod'] ?? $item['tipoProd'] ?? '';
-        $descripcion = $item['item'] ?? '';
-        $costoUSD = floatval($item['costoUSD'] ?? 0);
-        $cantidad = intval($item['cantidad'] ?? 0);
-        $subtotal = floatval($item['subtotal'] ?? 0);
-        $precioVenta = floatval($item['precioVenta'] ?? 0);
-
-        fputcsv($output, [
-            $tipo, $recurrencia, $categoria, $tipoProd, $descripcion,
-            number_format($costoUSD, 4), $cantidad, 
-            number_format($subtotal, 2), number_format($precioVenta, 2)
-        ], ';');
-
-        $total += $precioVenta;
+        $row = [
+            $item['tipo_costo'] ?? $item['tipo'] ?? '',
+            $item['recurrencia'] ?? '',
+            $item['categoria'] ?? '',
+            $item['tipo_prod'] ?? $item['tipoProd'] ?? '',
+            $item['item'] ?? '',
+            '$' . number_format(floatval($item['costoUSD'] ?? 0), 4),
+            intval($item['cantidad'] ?? 0),
+            '$' . number_format(floatval($item['subtotal'] ?? 0), 2),
+            '$' . number_format(floatval($item['precioVenta'] ?? 0), 2)
+        ];
+        
+        fputcsv($output, $row);
+        $total += floatval($item['precioVenta'] ?? 0);
     }
-
+    
     // Total
-    fputcsv($output, [''], ';');
-    fputcsv($output, ['', '', '', '', '', '', 'TOTAL:', '', number_format($total, 2)], ';');
-
+    fputcsv($output, ['']);
+    fputcsv($output, ['', '', '', '', '', '', 'TOTAL:', '', '$' . number_format($total, 2)]);
+    
+    // Resumen
+    fputcsv($output, ['']);
+    fputcsv($output, ['RESUMEN']);
+    fputcsv($output, ['Items cotizados:', count($items)]);
+    fputcsv($output, ['Total cotización:', '$' . number_format($total, 2)]);
+    
     fclose($output);
 }
 ?>
