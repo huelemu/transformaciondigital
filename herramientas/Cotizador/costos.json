@@ -285,6 +285,20 @@
             "costoUSD": 30,
             "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
+        },
+        {
+            "tipo_costo": "Variable",
+            "recurrencia": "Mensual",
+            "categoria": "Servicios",
+            "tipo_prod": "Desarrollo",
+            "item": "Horas Operador PY",
+            "costoUSD": 2,
+            "grupo": "Propuesta Habitual",
+            "margen_custom": 80,
+            "notas": "Prueba",
+            "fecha_creacion": "2025-09-16 22:56:53",
+            "activo": true,
+            "id": 1758056840
         }
     ],
     "migracion": {

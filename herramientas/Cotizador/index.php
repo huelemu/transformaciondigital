@@ -22,7 +22,7 @@ $costos = $data['costos'] ?? [];
                 <button type="button" class="btn btn-success" onclick="exportarCotizacion()">
                     <span>📊</span> Exportar Excel
                 </button>
-                <a href="admin.php" id="adminLink" class="btn btn-admin">
+                <a href="admin.php" id="adminLink" class="btn btn-admin" style="display: none;">
                     <span>⚙️</span> Admin
                 </a>
             </div>
@@ -65,8 +65,9 @@ $costos = $data['costos'] ?? [];
                     <input type="text" class="filter-input" data-col="0" placeholder="Filtrar por tipo...">
                     <input type="text" class="filter-input" data-col="1" placeholder="Filtrar por recurrencia...">
                     <input type="text" class="filter-input" data-col="2" placeholder="Filtrar por categoría...">
-                    <input type="text" class="filter-input" data-col="3" placeholder="Filtrar por producto...">
-                    <input type="text" class="filter-input" data-col="4" placeholder="Filtrar por item...">
+                    <input type="text" class="filter-input" data-col="3" placeholder="Filtrar por grupo...">
+                    <input type="text" class="filter-input" data-col="4" placeholder="Filtrar por producto...">
+                    <input type="text" class="filter-input" data-col="5" placeholder="Filtrar por item...">
                 </div>
             </div>
             
@@ -77,9 +78,11 @@ $costos = $data['costos'] ?? [];
                             <th>Tipo</th>
                             <th>Recurrencia</th>
                             <th>Categoría</th>
+                            <th>Grupo</th>
                             <th>Producto</th>
                             <th>Item</th>
                             <th>Costo USD</th>
+                            <th>Margen %</th>
                             <th>Cantidad</th>
                             <th>Subtotal</th>
                             <th>Precio Venta</th>
@@ -99,11 +102,25 @@ $costos = $data['costos'] ?? [];
                                 </span>
                             </td>
                             <td><?= htmlspecialchars($item['categoria']) ?></td>
+                            <td>
+                                <span class="tag" style="background: rgba(37, 99, 235, 0.1); color: #2563eb;">
+                                    <?= htmlspecialchars($item['grupo'] ?? 'Sin Grupo') ?>
+                                </span>
+                            </td>
                             <td><?= htmlspecialchars($item['tipo_prod']) ?></td>
                             <td class="tooltip" data-tooltip="<?= htmlspecialchars($item['item']) ?>">
                                 <?= strlen($item['item']) > 50 ? substr(htmlspecialchars($item['item']), 0, 50) . '...' : htmlspecialchars($item['item']) ?>
                             </td>
                             <td class="money">$<?= number_format($item['costoUSD'], 4) ?></td>
+                            <td>
+                                <input type="number" 
+                                       class="margen-input" 
+                                       min="0" 
+                                       max="99" 
+                                       step="1" 
+                                       placeholder="50"
+                                       style="width: 60px; text-align: center;">
+                            </td>
                             <td>
                                 <input type="number" 
                                        class="cantidad-input cantidad" 
@@ -115,6 +132,7 @@ $costos = $data['costos'] ?? [];
                                        data-tipo="<?= htmlspecialchars($item['tipo_costo']) ?>"
                                        data-recurrencia="<?= htmlspecialchars($item['recurrencia']) ?>"
                                        data-categoria="<?= htmlspecialchars($item['categoria']) ?>"
+                                       data-grupo="<?= htmlspecialchars($item['grupo'] ?? 'Sin Grupo') ?>"
                                        data-producto="<?= htmlspecialchars($item['tipo_prod']) ?>"
                                        data-item="<?= htmlspecialchars($item['item']) ?>">
                             </td>
