@@ -1,5 +1,5 @@
 <?php
-// Verificar autenticación (opcional)
+// admin.php - Versión con soporte completo para grupos
 session_start();
 
 // Leer archivo JSON con los costos
@@ -19,6 +19,7 @@ if ($_POST) {
                     'tipo_prod' => $_POST['tipo_prod'],
                     'item' => $_POST['item'],
                     'costoUSD' => floatval($_POST['costoUSD']),
+                    'grupo' => $_POST['grupo'] ?? 'General', // NUEVO CAMPO
                     'margen_custom' => !empty($_POST['margen_custom']) ? intval($_POST['margen_custom']) : null,
                     'notas' => $_POST['notas'] ?? '',
                     'fecha_creacion' => date('Y-m-d H:i:s'),
@@ -37,7 +38,7 @@ if ($_POST) {
                     }
                 } else {
                     // Nuevo item
-                    $newItem['id'] = time() + rand(1, 1000); // ID único
+                    $newItem['id'] = time() + rand(1, 1000);
                     $costos[] = $newItem;
                 }
                 
@@ -59,130 +60,113 @@ if ($_POST) {
                 header('Location: admin.php?success=item_deleted');
                 exit;
                 
-            case 'save_margins':
-                // Guardar márgenes
-                $margins = json_decode($_POST['margins_data'], true);
-                foreach ($costos as $index => $item) {
-                    $itemId = $item['id'] ?? $index;
-                    if (isset($margins[$itemId])) {
-                        $costos[$index]['margen_custom'] = intval($margins[$itemId]);
-                        $costos[$index]['fecha_modificacion'] = date('Y-m-d H:i:s');
-                    }
-                }
-                
-                $data['costos'] = $costos;
-                file_put_contents('costos.json', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                
-                header('Location: admin.php?success=margins_saved');
-                exit;
-
-            case 'toggle_item_status':
-                // Activar/desactivar item
-                $itemId = intval($_POST['item_id']);
-                foreach ($costos as $index => $item) {
-                    if (isset($item['id']) && $item['id'] == $itemId) {
-                        $costos[$index]['activo'] = !($item['activo'] ?? true);
-                        $costos[$index]['fecha_modificacion'] = date('Y-m-d H:i:s');
-                        break;
-                    }
-                }
-                
-                $data['costos'] = $costos;
-                file_put_contents('costos.json', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                
-                header('Location: admin.php?success=status_updated');
-                exit;
-
-            case 'bulk_update':
-                // Actualización masiva
+            case 'bulk_update_grupo':
+                // Actualización masiva de grupos
                 $selectedItems = json_decode($_POST['selected_items'], true);
-                $updateType = $_POST['bulk_type'];
-                $updateValue = $_POST['bulk_value'];
+                $nuevoGrupo = $_POST['nuevo_grupo'];
+                $itemsActualizados = 0;
 
                 foreach ($costos as $index => $item) {
                     $itemId = $item['id'] ?? $index;
                     if (in_array($itemId, $selectedItems)) {
-                        switch ($updateType) {
-                            case 'margin':
-                                $costos[$index]['margen_custom'] = intval($updateValue);
-                                break;
-                            case 'category':
-                                $costos[$index]['categoria'] = $updateValue;
-                                break;
-                            case 'status':
-                                $costos[$index]['activo'] = $updateValue === 'active';
-                                break;
-                        }
+                        $costos[$index]['grupo'] = $nuevoGrupo;
                         $costos[$index]['fecha_modificacion'] = date('Y-m-d H:i:s');
+                        $itemsActualizados++;
                     }
                 }
 
                 $data['costos'] = $costos;
                 file_put_contents('costos.json', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 
-                header('Location: admin.php?success=bulk_updated');
+                header("Location: admin.php?success=bulk_updated&count={$itemsActualizados}");
                 exit;
         }
     }
 }
 
-// Calcular estadísticas
-$totalItems = count($costos);
-$itemsActivos = count(array_filter($costos, function($item) { return $item['activo'] ?? true; }));
-$itemsFijos = count(array_filter($costos, function($item) { return $item['tipo_costo'] === 'Fijo'; }));
-$itemsVariables = count(array_filter($costos, function($item) { return $item['tipo_costo'] === 'Variable'; }));
+// Obtener listas únicas para filtros y selects
+$categorias = array_unique(array_filter(array_column($costos, 'categoria')));
+$grupos = array_unique(array_filter(array_column($costos, 'grupo')));
+$tiposProducto = array_unique(array_filter(array_column($costos, 'tipo_prod')));
 
-$margenGlobal = 50; // Valor por defecto
+// Calcular estadísticas principales
+$totalItems = count($costos);
+$itemsActivos = count(array_filter($costos, function($item) { 
+    return $item['activo'] ?? true; 
+}));
+
+// Calcular margen promedio global
+$margenGlobal = 50;
 $margenPromedio = 0;
 if ($totalItems > 0) {
-    $sumMargenes = 0;
+    $sumaMaxenes = 0;
     foreach ($costos as $item) {
-        $sumMargenes += $item['margen_custom'] ?? $margenGlobal;
+        $margen = $item['margen_custom'] ?? $margenGlobal;
+        $sumaMaxenes += $margen;
     }
-    $margenPromedio = round($sumMargenes / $totalItems, 1);
+    $margenPromedio = round($sumaMaxenes / $totalItems, 1);
 }
 
-// Obtener categorías únicas
-$categorias = array_unique(array_column($costos, 'categoria'));
-$tiposProducto = array_unique(array_column($costos, 'tipo_prod'));
+// Calcular estadísticas por grupo
+function calcularEstadisticasPorGrupo($costos) {
+    $estadisticasGrupos = [];
+    
+    foreach ($costos as $item) {
+        $grupo = $item['grupo'] ?? 'Sin Grupo';
+        
+        if (!isset($estadisticasGrupos[$grupo])) {
+            $estadisticasGrupos[$grupo] = [
+                'cantidad' => 0,
+                'costoTotal' => 0,
+                'fijos' => 0,
+                'variables' => 0,
+                'activos' => 0
+            ];
+        }
+        
+        $estadisticasGrupos[$grupo]['cantidad']++;
+        $estadisticasGrupos[$grupo]['costoTotal'] += $item['costoUSD'];
+        
+        if ($item['tipo_costo'] === 'Fijo') {
+            $estadisticasGrupos[$grupo]['fijos']++;
+        } else {
+            $estadisticasGrupos[$grupo]['variables']++;
+        }
+        
+        if ($item['activo'] ?? true) {
+            $estadisticasGrupos[$grupo]['activos']++;
+        }
+    }
+    
+    // Calcular promedios
+    foreach ($estadisticasGrupos as $grupo => &$stats) {
+        $stats['costoPromedio'] = $stats['cantidad'] > 0 ? $stats['costoTotal'] / $stats['cantidad'] : 0;
+    }
+    
+    return $estadisticasGrupos;
+}
 
-// Funciones auxiliares
-function obtenerEstadisticasCategoria($costos, $categoria, $margenGlobal) {
-    $itemsCategoria = array_filter($costos, function($item) use ($categoria) {
-        return $item['categoria'] === $categoria;
-    });
+$estadisticasGrupos = calcularEstadisticasPorGrupo($costos);
+
+// Estadísticas adicionales
+function calcularEstadisticasDetalladas($costos) {
+    $fijos = array_filter($costos, function($item) { return $item['tipo_costo'] === 'Fijo'; });
+    $variables = array_filter($costos, function($item) { return $item['tipo_costo'] === 'Variable'; });
     
-    if (empty($itemsCategoria)) {
-        return [
-            'cantidad' => 0,
-            'productos' => 0,
-            'costoPromedio' => 0,
-            'margenPromedio' => 0,
-            'precioPromedio' => 0
-        ];
-    }
-    
-    $productos = array_unique(array_column($itemsCategoria, 'tipo_prod'));
-    $costoTotal = array_sum(array_column($itemsCategoria, 'costoUSD'));
-    $costoPromedio = $costoTotal / count($itemsCategoria);
-    
-    $margenes = [];
-    $precios = [];
-    foreach ($itemsCategoria as $item) {
-        $margen = $item['margen_custom'] ?? $margenGlobal;
-        $precio = $item['costoUSD'] / (1 - $margen / 100);
-        $margenes[] = $margen;
-        $precios[] = $precio;
-    }
+    $costoTotal = array_sum(array_column($costos, 'costoUSD'));
+    $costoPromedio = count($costos) > 0 ? $costoTotal / count($costos) : 0;
     
     return [
-        'cantidad' => count($itemsCategoria),
-        'productos' => count($productos),
+        'totalFijos' => count($fijos),
+        'totalVariables' => count($variables),
+        'costoTotal' => $costoTotal,
         'costoPromedio' => $costoPromedio,
-        'margenPromedio' => array_sum($margenes) / count($margenes),
-        'precioPromedio' => array_sum($precios) / count($precios)
+        'categorias' => count(array_unique(array_column($costos, 'categoria'))),
+        'grupos' => count(array_unique(array_column($costos, 'grupo')))
     ];
 }
+
+$estadisticasDetalladas = calcularEstadisticasDetalladas($costos);
 ?>
 
 <!DOCTYPE html>
@@ -197,20 +181,24 @@ function obtenerEstadisticasCategoria($costos, $categoria, $margenGlobal) {
     <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
+    <!-- Header simplificado -->
     <header class="header">
         <div class="header-content">
-            <h1>⚙️ Administración - Items y Márgenes</h1>
+            <h1>
+                <span>⚙️</span>
+                Administración
+            </h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="generarAnalisisCompleto()" title="Análisis completo (Ctrl+Shift+A)">
-                    <span>📊</span> Análisis
+                <button class="btn btn-secondary" onclick="mostrarEstadisticasDetalladas()" title="Ver estadísticas completas">
+                    <span>📊</span> Estadísticas
                 </button>
-                <button class="btn btn-secondary" onclick="exportarItems()" title="Exportar items (Ctrl+E)">
+                <button class="btn btn-secondary" onclick="mostrarGestionGrupos()" title="Gestionar grupos">
+                    <span>🏷️</span> Grupos
+                </button>
+                <button class="btn btn-secondary" onclick="exportarItems()" title="Exportar items">
                     <span>📤</span> Exportar
                 </button>
-                <button class="btn btn-secondary" onclick="importarItems()" title="Importar items (Ctrl+I)">
-                    <span>📥</span> Importar
-                </button>
-                <a href="index.php" class="btn btn-primary">← Volver al Cotizador</a>
+                <a href="index.php" class="btn btn-primary">← Cotizador</a>
             </div>
         </div>
     </header>
@@ -219,911 +207,958 @@ function obtenerEstadisticasCategoria($costos, $categoria, $margenGlobal) {
         <!-- Mostrar mensajes de éxito/error -->
         <?php if (isset($_GET['success'])): ?>
             <div class="alert alert-success" id="success-alert">
-                <span class="alert-icon">✅</span>
-                <div class="alert-content">
-                    <div class="alert-title">Operación exitosa</div>
-                    <div class="alert-message">
-                        <?php
-                        switch ($_GET['success']) {
-                            case 'item_saved':
-                                echo 'Item guardado correctamente';
-                                break;
-                            case 'item_deleted':
-                                echo 'Item eliminado correctamente';
-                                break;
-                            case 'margins_saved':
-                                echo 'Márgenes guardados correctamente';
-                                break;
-                            case 'status_updated':
-                                echo 'Estado del item actualizado correctamente';
-                                break;
-                            case 'bulk_updated':
-                                echo 'Actualización masiva completada correctamente';
-                                break;
-                            default:
-                                echo 'Operación completada correctamente';
-                        }
-                        ?>
-                    </div>
+                <span>✅</span>
+                <div>
+                    <?php
+                    switch ($_GET['success']) {
+                        case 'item_saved':
+                            echo 'Item guardado correctamente';
+                            break;
+                        case 'item_deleted':
+                            echo 'Item eliminado correctamente';
+                            break;
+                        case 'bulk_updated':
+                            $count = $_GET['count'] ?? 0;
+                            echo "Se actualizaron {$count} items correctamente";
+                            break;
+                        default:
+                            echo 'Operación completada exitosamente';
+                    }
+                    ?>
                 </div>
             </div>
         <?php endif; ?>
 
-        <?php if (isset($_GET['error'])): ?>
-            <div class="alert alert-error" id="error-alert">
-                <span class="alert-icon">❌</span>
-                <div class="alert-content">
-                    <div class="alert-title">Error</div>
-                    <div class="alert-message">
-                        <?php echo htmlspecialchars($_GET['error']); ?>
-                    </div>
+        <!-- Estadísticas principales -->
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-value"><?php echo $totalItems; ?></span>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                
+                <div class="stat-card">
+                    <span class="stat-value"><?php echo count($grupos); ?></span>
+                    <div class="stat-label">Grupos</div>
+                </div>
+                
+                <div class="stat-card">
+                    <span class="stat-value"><?php echo $margenPromedio; ?>%</span>
+                    <div class="stat-label">Margen Promedio</div>
                 </div>
             </div>
-        <?php endif; ?>
-
-        <!-- Estadísticas Dashboard -->
-        <div class="stats-grid">
-            <div class="stat-card stat-items">
-                <div class="stat-value"><?= $totalItems ?></div>
-                <div class="stat-label">Total Items</div>
-                <div class="stat-sublabel"><?= $itemsActivos ?> activos</div>
-            </div>
-            <div class="stat-card stat-fijos">
-                <div class="stat-value"><?= $itemsFijos ?></div>
-                <div class="stat-label">Items Fijos</div>
-                <div class="stat-sublabel"><?= round(($itemsFijos / max($totalItems, 1)) * 100, 1) ?>%</div>
-            </div>
-            <div class="stat-card stat-variables">
-                <div class="stat-value"><?= $itemsVariables ?></div>
-                <div class="stat-label">Items Variables</div>
-                <div class="stat-sublabel"><?= round(($itemsVariables / max($totalItems, 1)) * 100, 1) ?>%</div>
-            </div>
-            <div class="stat-card stat-margen">
-                <div class="stat-value"><?= $margenPromedio ?>%</div>
-                <div class="stat-label">Margen Promedio</div>
-                <div class="stat-sublabel">Global: <?= $margenGlobal ?>%</div>
-            </div>
+            
+            <button class="stats-toggle" onclick="mostrarEstadisticasDetalladas()">
+                Ver más estadísticas →
+            </button>
         </div>
 
-        <!-- Pestañas de Navegación -->
+        <!-- Pestañas -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('items')" data-tab="items">
-                📦 Gestión de Items
-            </button>
-            <button class="tab" onclick="switchTab('margenes')" data-tab="margenes">
-                📊 Márgenes por Item
-            </button>
-            <button class="tab" onclick="switchTab('categorias')" data-tab="categorias">
-                🏷️ Análisis por Categorías
-            </button>
-            <button class="tab" onclick="switchTab('configuracion')" data-tab="configuracion">
-                ⚙️ Configuración
-            </button>
+            <button class="tab active" onclick="cambiarTab('items')">Items</button>
+            <button class="tab" onclick="cambiarTab('grupos')">Por Grupos</button>
+            <button class="tab" onclick="cambiarTab('margenes')">Márgenes</button>
         </div>
 
-        <!-- Tab: Gestión de Items -->
-        <div id="items-tab" class="tab-content active">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Gestión de Items</h3>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" onclick="toggleBulkActions()" id="bulk-toggle">
+        <!-- Filtros -->
+        <div class="filters-container">
+            <div class="filters-grid">
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-items" class="search-input" placeholder="Buscar items...">
+                </div>
+                
+                <select id="filter-tipo" class="form-control">
+                    <option value="">Tipo</option>
+                    <option value="Fijo">Fijo</option>
+                    <option value="Variable">Variable</option>
+                </select>
+                
+                <select id="filter-categoria" class="form-control">
+                    <option value="">Categoría</option>
+                    <?php foreach ($categorias as $categoria): ?>
+                        <option value="<?php echo htmlspecialchars($categoria); ?>"><?php echo htmlspecialchars($categoria); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                
+                <select id="filter-grupo" class="form-control">
+                    <option value="">Grupo</option>
+                    <?php foreach ($grupos as $grupo): ?>
+                        <option value="<?php echo htmlspecialchars($grupo); ?>"><?php echo htmlspecialchars($grupo); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                
+                <button class="btn btn-secondary" onclick="limpiarFiltros()">Limpiar</button>
+            </div>
+        </div>
+
+        <!-- Tab: Items -->
+        <div id="tab-items" class="tab-content active">
+            <div class="admin-table">
+                <div class="table-header">
+                    <h3>Gestión de Items</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary" onclick="toggleSeleccionMasiva()" id="btn-seleccion">
                             <span>☑️</span> Selección Múltiple
                         </button>
-                        <button class="btn btn-primary" onclick="openModal('item-modal')" title="Nuevo item (Ctrl+N)">
+                        <button class="btn btn-primary" onclick="openModal('item-modal')">
                             <span>➕</span> Nuevo Item
                         </button>
                     </div>
                 </div>
-
-                <!-- Acciones masivas (ocultas por defecto) -->
-                <div class="bulk-actions" id="bulk-actions" style="display: none;">
-                    <div class="bulk-actions-header">
+                
+                <!-- Acciones masivas -->
+                <div id="bulk-actions" class="bulk-actions" style="display: none;">
+                    <div style="padding: 1rem; background: var(--surface-hover); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem;">
                         <span id="selected-count">0 items seleccionados</span>
-                        <div class="bulk-buttons">
-                            <select id="bulk-action-type">
-                                <option value="">Seleccionar acción...</option>
-                                <option value="margin">Cambiar margen</option>
-                                <option value="category">Cambiar categoría</option>
-                                <option value="status">Cambiar estado</option>
-                                <option value="delete">Eliminar seleccionados</option>
-                            </select>
-                            <input type="text" id="bulk-action-value" placeholder="Nuevo valor..." style="display: none;">
-                            <button class="btn btn-warning" onclick="executeBulkAction()">Aplicar</button>
-                            <button class="btn btn-secondary" onclick="clearSelection()">Limpiar</button>
-                        </div>
+                        
+                        <select id="bulk-grupo" style="padding: 0.5rem;">
+                            <option value="">Cambiar grupo...</option>
+                            <?php foreach ($grupos as $grupo): ?>
+                                <option value="<?php echo htmlspecialchars($grupo); ?>"><?php echo htmlspecialchars($grupo); ?></option>
+                            <?php endforeach; ?>
+                            <option value="nuevo">+ Nuevo Grupo</option>
+                        </select>
+                        
+                        <button class="btn btn-primary" onclick="aplicarCambiosMasivos()">Aplicar</button>
+                        <button class="btn btn-secondary" onclick="cancelarSeleccionMasiva()">Cancelar</button>
                     </div>
                 </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="select-all" onchange="toggleSelectAll()" style="display: none;">
+                            </th>
+                            <th>Tipo</th>
+                            <th>Grupo</th>
+                            <th>Categoría</th>
+                            <th>Producto</th>
+                            <th>Item</th>
+                            <th>Costo USD</th>
+                            <th>Margen</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-table">
+                        <?php foreach ($costos as $index => $item): ?>
+                            <?php
+                            $itemId = $item['id'] ?? $index;
+                            $margen = $item['margen_custom'] ?? $margenGlobal;
+                            $precio = $item['costoUSD'] / (1 - $margen / 100);
+                            $activo = $item['activo'] ?? true;
+                            $grupo = $item['grupo'] ?? 'Sin Grupo';
+                            ?>
+                            <tr class="item-row" data-id="<?php echo $itemId; ?>" 
+                                data-tipo="<?php echo $item['tipo_costo']; ?>"
+                                data-categoria="<?php echo htmlspecialchars($item['categoria']); ?>"
+                                data-grupo="<?php echo htmlspecialchars($grupo); ?>"
+                                style="<?php echo !$activo ? 'opacity: 0.6;' : ''; ?>">
+                                
+                                <td>
+                                    <input type="checkbox" class="item-checkbox" value="<?php echo $itemId; ?>" style="display: none;">
+                                </td>
+                                <td>
+                                    <span class="tag tag-<?php echo strtolower($item['tipo_costo']); ?>">
+                                        <?php echo $item['tipo_costo']; ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="tag" style="background: rgba(37, 99, 235, 0.1); color: var(--primary);">
+                                        <?php echo htmlspecialchars($grupo); ?>
+                                    </span>
+                                </td>
+                                <td><?php echo htmlspecialchars($item['categoria']); ?></td>
+                                <td><?php echo htmlspecialchars($item['tipo_prod']); ?></td>
+                                <td>
+                                    <div class="text-truncate" title="<?php echo htmlspecialchars($item['item']); ?>">
+                                        <?php echo htmlspecialchars($item['item']); ?>
+                                    </div>
+                                </td>
+                                <td class="font-mono">$<?php echo number_format($item['costoUSD'], 2); ?></td>
+                                <td>
+                                    <span class="status-indicator <?php echo $item['margen_custom'] ? 'status-active' : 'status-inactive'; ?>">
+                                        <?php echo $margen; ?>%
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-indicator <?php echo $activo ? 'status-active' : 'status-inactive'; ?>">
+                                        <?php echo $activo ? 'Activo' : 'Inactivo'; ?>
+                                    </span>
+                                </td>
+                                <td class="table-actions-cell">
+                                    <button class="btn btn-secondary" onclick="editarItem(<?php echo $itemId; ?>)">
+                                        <span>✏️</span>
+                                    </button>
+                                    <button class="btn btn-danger" onclick="eliminarItem(<?php echo $itemId; ?>)">
+                                        <span>🗑️</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                <!-- Filtros Avanzados -->
-                <div class="filters-container">
-                    <div class="filters-header">
-                        <h4 class="filters-title">🔍 Filtros de Búsqueda</h4>
-                        <button class="filters-toggle" onclick="toggleFilters()">
-                            <span id="filter-toggle-text">Ocultar</span>
+        <!-- Tab: Por Grupos -->
+        <div id="tab-grupos" class="tab-content">
+            <div class="admin-table">
+                <div class="table-header">
+                    <h3>Vista por Grupos</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-secondary" onclick="expandirTodosGrupos()">
+                            <span>📂</span> Expandir Todo
+                        </button>
+                        <button class="btn btn-secondary" onclick="contraerTodosGrupos()">
+                            <span>📁</span> Contraer Todo
                         </button>
                     </div>
-                    <div class="filters-grid" id="filters-grid">
-                        <div class="filter-group">
-                            <label>Búsqueda general</label>
-                            <div class="search-container">
-                                <span class="search-icon">🔍</span>
-                                <input type="text" class="search-input" id="search-items" placeholder="Buscar en todos los campos...">
+                </div>
+                
+                <div class="grupos-container">
+                    <?php foreach ($estadisticasGrupos as $grupo => $stats): ?>
+                        <div class="grupo-section" data-grupo="<?php echo htmlspecialchars($grupo); ?>">
+                            <div class="grupo-header" onclick="toggleGrupo('<?php echo htmlspecialchars($grupo); ?>')">
+                                <div class="grupo-info">
+                                    <h4>
+                                        <span class="toggle-icon">▼</span>
+                                        <?php echo htmlspecialchars($grupo); ?>
+                                        <span class="grupo-badge"><?php echo $stats['cantidad']; ?> items</span>
+                                    </h4>
+                                    <div class="grupo-stats">
+                                        <span>💰 $<?php echo number_format($stats['costoTotal'], 0); ?></span>
+                                        <span>📊 $<?php echo number_format($stats['costoPromedio'], 2); ?> promedio</span>
+                                        <span>🔧 <?php echo $stats['fijos']; ?> fijos</span>
+                                        <span>⚡ <?php echo $stats['variables']; ?> variables</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grupo-items" style="display: block;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>Categoría</th>
+                                            <th>Item</th>
+                                            <th>Costo USD</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $itemsGrupo = array_filter($costos, function($item) use ($grupo) {
+                                            return ($item['grupo'] ?? 'Sin Grupo') === $grupo;
+                                        });
+                                        ?>
+                                        <?php foreach ($itemsGrupo as $item): ?>
+                                            <?php $itemId = $item['id'] ?? 0; ?>
+                                            <tr>
+                                                <td>
+                                                    <span class="tag tag-<?php echo strtolower($item['tipo_costo']); ?>">
+                                                        <?php echo $item['tipo_costo']; ?>
+                                                    </span>
+                                                </td>
+                                                <td><?php echo htmlspecialchars($item['categoria']); ?></td>
+                                                <td>
+                                                    <div class="text-truncate" title="<?php echo htmlspecialchars($item['item']); ?>">
+                                                        <?php echo htmlspecialchars($item['item']); ?>
+                                                    </div>
+                                                </td>
+                                                <td class="font-mono">$<?php echo number_format($item['costoUSD'], 2); ?></td>
+                                                <td>
+                                                    <span class="status-indicator <?php echo ($item['activo'] ?? true) ? 'status-active' : 'status-inactive'; ?>">
+                                                        <?php echo ($item['activo'] ?? true) ? 'Activo' : 'Inactivo'; ?>
+                                                    </span>
+                                                </td>
+                                                <td class="table-actions-cell">
+                                                    <button class="btn btn-secondary" onclick="editarItem(<?php echo $itemId; ?>)">✏️</button>
+                                                    <button class="btn btn-danger" onclick="eliminarItem(<?php echo $itemId; ?>)">🗑️</button>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        <div class="filter-group">
-                            <label>Tipo de Costo</label>
-                            <select id="filter-tipo" class="filter-select">
-                                <option value="">Todos los tipos</option>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Márgenes -->
+        <div id="tab-margenes" class="tab-content">
+            <div class="admin-table">
+                <div class="table-header">
+                    <h3>Gestión de Márgenes</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="guardarMargenes()">
+                            <span>💾</span> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="padding: 1.5rem;">
+                    <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
+                        <label for="margen-global">Margen Global (%)</label>
+                        <input type="number" id="margen-global" value="<?php echo $margenGlobal; ?>" min="0" max="99" step="1">
+                        <button class="btn btn-secondary" onclick="aplicarMargenGlobal()" style="margin-top: 0.5rem;">
+                            Aplicar a todos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar item -->
+    <div id="item-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="item-modal-title">Nuevo Item</h3>
+                <button onclick="closeModal('item-modal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <form id="item-form" method="POST" action="">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="save_item">
+                    <input type="hidden" id="edit-item-id" name="item_id" value="">
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="tipo_costo">Tipo de Costo *</label>
+                            <select id="tipo_costo" name="tipo_costo" required>
+                                <option value="">Seleccionar...</option>
                                 <option value="Fijo">Fijo</option>
                                 <option value="Variable">Variable</option>
                             </select>
                         </div>
-                        <div class="filter-group">
-                            <label>Categoría</label>
-                            <select id="filter-categoria" class="filter-select">
-                                <option value="">Todas las categorías</option>
-                                <?php foreach ($categorias as $categoria): ?>
-                                    <option value="<?= htmlspecialchars($categoria) ?>">
-                                        <?= htmlspecialchars($categoria) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Recurrencia</label>
-                            <select id="filter-recurrencia" class="filter-select">
-                                <option value="">Todas las recurrencias</option>
+                        
+                        <div class="form-group">
+                            <label for="recurrencia">Recurrencia *</label>
+                            <select id="recurrencia" name="recurrencia" required>
+                                <option value="">Seleccionar...</option>
                                 <option value="Mensual">Mensual</option>
-                                <option value="Unico">Único</option>
+                                <option value="Anual">Anual</option>
+                                <option value="Única">Única</option>
                             </select>
                         </div>
-                        <div class="filter-group">
-                            <label>Estado</label>
-                            <select id="filter-estado" class="filter-select">
-                                <option value="">Todos los estados</option>
-                                <option value="activo">Activos</option>
-                                <option value="inactivo">Inactivos</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Rango de Costo</label>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <input type="number" id="filter-costo-min" placeholder="Mín" step="0.01">
-                                <input type="number" id="filter-costo-max" placeholder="Máx" step="0.01">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="filter-clear">
-                        <span class="filters-count" id="filters-count">
-                            Mostrando <?= $totalItems ?> de <?= $totalItems ?> items
-                        </span>
-                        <button class="btn-clear-filters" onclick="clearFilters()">
-                            🗑️ Limpiar Filtros
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tabla de Items -->
-                <div class="admin-table">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th class="bulk-select-header" style="display: none;">
-                                        <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
-                                    </th>
-                                    <th onclick="sortTable(1)">Tipo <span class="sort-indicator">↕️</span></th>
-                                    <th onclick="sortTable(2)">Categoría <span class="sort-indicator">↕️</span></th>
-                                    <th onclick="sortTable(3)">Producto <span class="sort-indicator">↕️</span></th>
-                                    <th onclick="sortTable(4)">Item <span class="sort-indicator">↕️</span></th>
-                                    <th onclick="sortTable(5)">Costo USD <span class="sort-indicator">↕️</span></th>
-                                    <th onclick="sortTable(6)">Margen % <span class="sort-indicator">↕️</span></th>
-                                    <th onclick="sortTable(7)">Precio Venta <span class="sort-indicator">↕️</span></th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="items-table">
-                                <?php foreach ($costos as $index => $item): ?>
-                                    <?php
-                                    $itemId = $item['id'] ?? $index;
-                                    $margen = $item['margen_custom'] ?? $margenGlobal;
-                                    $precioVenta = $item['costoUSD'] > 0 ? $item['costoUSD'] / (1 - $margen / 100) : 0;
-                                    $activo = $item['activo'] ?? true;
-                                    ?>
-                                    <tr data-id="<?= $itemId ?>" class="item-row <?= !$activo ? 'item-inactive' : '' ?>" 
-                                        data-tipo="<?= htmlspecialchars($item['tipo_costo']) ?>"
-                                        data-categoria="<?= htmlspecialchars($item['categoria']) ?>"
-                                        data-recurrencia="<?= htmlspecialchars($item['recurrencia']) ?>"
-                                        data-costo="<?= $item['costoUSD'] ?>"
-                                        data-activo="<?= $activo ? 'true' : 'false' ?>">
-                                        
-                                        <td class="bulk-select-cell" style="display: none;">
-                                            <input type="checkbox" class="item-checkbox" value="<?= $itemId ?>">
-                                        </td>
-                                        
-                                        <td>
-                                            <span class="tag tag-<?= strtolower($item['tipo_costo']) ?>">
-                                                <?= htmlspecialchars($item['tipo_costo']) ?>
-                                            </span>
-                                            <small class="tag tag-<?= strtolower($item['recurrencia']) ?>" style="margin-left: 0.5rem;">
-                                                <?= htmlspecialchars($item['recurrencia']) ?>
-                                            </small>
-                                        </td>
-                                        
-                                        <td><?= htmlspecialchars($item['categoria']) ?></td>
-                                        
-                                        <td><?= htmlspecialchars($item['tipo_prod']) ?></td>
-                                        
-                                        <td class="tooltip-advanced" data-tooltip="<?= htmlspecialchars($item['item']) ?>">
-                                            <span class="text-truncate" style="max-width: 300px; display: inline-block;">
-                                                <?= htmlspecialchars($item['item']) ?>
-                                            </span>
-                                            <?php if (!empty($item['notas'])): ?>
-                                                <br><small class="text-secondary">📝 <?= htmlspecialchars(substr($item['notas'], 0, 50)) ?>...</small>
-                                            <?php endif; ?>
-                                        </td>
-                                        
-                                        <td class="font-mono">$<?= number_format($item['costoUSD'], 4) ?></td>
-                                        
-                                        <td>
-                                            <span class="margin-indicator <?= $item['margen_custom'] ? 'positive' : 'neutral' ?>">
-                                                <?= $margen ?>%
-                                            </span>
-                                            <?php if ($item['margen_custom']): ?>
-                                                <small style="display: block; color: var(--text-secondary);">Personalizado</small>
-                                            <?php endif; ?>
-                                        </td>
-                                        
-                                        <td class="font-mono money positive">$<?= number_format($precioVenta, 4) ?></td>
-                                        
-                                        <td>
-                                            <span class="status-indicator <?= $activo ? 'status-active' : 'status-inactive' ?>">
-                                                <?= $activo ? 'Activo' : 'Inactivo' ?>
-                                            </span>
-                                            <?php if (isset($item['fecha_modificacion'])): ?>
-                                                <br><small class="text-secondary">
-                                                    <?= date('d/m/Y', strtotime($item['fecha_modificacion'])) ?>
-                                                </small>
-                                            <?php endif; ?>
-                                        </td>
-                                        
-                                        <td class="table-actions-cell">
-                                            <button class="btn action-btn-edit" onclick="editarItem(<?= $itemId ?>)" title="Editar item">
-                                                ✏️
-                                            </button>
-                                            <button class="btn action-btn-duplicate" onclick="duplicarItem(<?= $itemId ?>)" title="Duplicar item">
-                                                📋
-                                            </button>
-                                            <button class="btn <?= $activo ? 'action-btn-warning' : 'action-btn-success' ?>" 
-                                                    onclick="toggleItemStatus(<?= $itemId ?>)" 
-                                                    title="<?= $activo ? 'Desactivar' : 'Activar' ?> item">
-                                                <?= $activo ? '⏸️' : '▶️' ?>
-                                            </button>
-                                            <button class="btn action-btn-delete" onclick="eliminarItem(<?= $itemId ?>)" title="Eliminar item">
-                                                🗑️
-                                            </button>
-                                        </td>
-                                    </tr>
+                        
+                        <div class="form-group">
+                            <label for="grupo">Grupo *</label>
+                            <select id="grupo" name="grupo" required onchange="manejarCambioGrupo()">
+                                <option value="">Seleccionar grupo...</option>
+                                <?php foreach ($grupos as $grupo): ?>
+                                    <option value="<?php echo htmlspecialchars($grupo); ?>"><?php echo htmlspecialchars($grupo); ?></option>
                                 <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab: Márgenes por Item -->
-        <div id="margenes-tab" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Gestión de Márgenes por Item</h3>
-                    <div class="header-actions">
-                        <button class="btn btn-success" onclick="guardarMargenes()" title="Guardar márgenes (Ctrl+S)">
-                            <span>💾</span> Guardar Márgenes
-                        </button>
-                        <button class="btn btn-secondary" onclick="resetearMargenes()">
-                            <span>🔄</span> Resetear Cambios
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="margen-global">Margen Global por Defecto</label>
-                        <div class="input-with-icon">
-                            <span class="icon">%</span>
-                            <input type="number" id="margen-global" value="<?= $margenGlobal ?>" min="0" max="99" step="1">
+                                <option value="nuevo">+ Crear Nuevo Grupo</option>
+                            </select>
+                            
+                            <!-- Campo para nuevo grupo (oculto por defecto) -->
+                            <input type="text" id="nuevo-grupo" placeholder="Nombre del nuevo grupo..." 
+                                   style="display: none; margin-top: 0.5rem;" onblur="confirmarNuevoGrupo()">
                         </div>
-                        <span class="help-text">Este margen se aplica a items sin margen personalizado</span>
-                    </div>
-                    <div class="form-group">
-                        <label for="margen-categoria">Aplicar por Categoría</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select id="categoria-margen-select">
-                                <option value="">Seleccionar categoría...</option>
+                        
+                        <div class="form-group">
+                            <label for="categoria">Categoría *</label>
+                            <select id="categoria" name="categoria" required>
+                                <option value="">Seleccionar...</option>
                                 <?php foreach ($categorias as $categoria): ?>
-                                    <option value="<?= htmlspecialchars($categoria) ?>">
-                                        <?= htmlspecialchars($categoria) ?>
-                                    </option>
+                                    <option value="<?php echo htmlspecialchars($categoria); ?>"><?php echo htmlspecialchars($categoria); ?></option>
                                 <?php endforeach; ?>
+                                <option value="nueva">+ Nueva Categoría</option>
                             </select>
-                            <input type="number" id="margen-categoria-valor" placeholder="%" min="0" max="99" step="1">
-                            <button class="btn btn-secondary" onclick="aplicarMargenCategoria()">Aplicar</button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tipo_prod">Tipo de Producto *</label>
+                            <input type="text" id="tipo_prod" name="tipo_prod" placeholder="Ej: Whatsapp, Email, SMS..." required 
+                                   list="tipos-producto">
+                            <datalist id="tipos-producto">
+                                <?php foreach ($tiposProducto as $tipo): ?>
+                                    <option value="<?php echo htmlspecialchars($tipo); ?>">
+                                <?php endforeach; ?>
+                            </datalist>
+                        </div>
+                        
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="item">Nombre del Item *</label>
+                            <input type="text" id="item" name="item" placeholder="Descripción detallada del item..." required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="costoUSD">Costo USD *</label>
+                            <input type="number" id="costoUSD" name="costoUSD" step="0.01" min="0" placeholder="0.00" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="margen_custom">Margen Personalizado (%)</label>
+                            <input type="number" id="margen_custom" name="margen_custom" min="0" max="99" step="1" placeholder="Usar margen global">
+                        </div>
+                        
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label for="notas">Notas (opcional)</label>
+                            <textarea id="notas" name="notas" rows="3" placeholder="Notas adicionales sobre el item..."></textarea>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button class="btn btn-warning" onclick="aplicarMargenGlobal()">
-                            <span>🌐</span> Aplicar Margen Global a Todos
-                        </button>
-                    </div>
                 </div>
-
-                <!-- Tabla de Márgenes -->
-                <div class="admin-table">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Categoría</th>
-                                    <th>Costo USD</th>
-                                    <th>Margen Actual %</th>
-                                    <th>Nuevo Margen %</th>
-                                    <th>Precio Venta</th>
-                                    <th>Diferencia vs Global</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="margenes-table">
-                                <?php foreach ($costos as $index => $item): ?>
-                                    <?php
-                                    $itemId = $item['id'] ?? $index;
-                                    $margen = $item['margen_custom'] ?? $margenGlobal;
-                                    $precioVenta = $item['costoUSD'] > 0 ? $item['costoUSD'] / (1 - $margen / 100) : 0;
-                                    $diferencia = $margen - $margenGlobal;
-                                    $activo = $item['activo'] ?? true;
-                                    ?>
-                                    <tr class="<?= !$activo ? 'item-inactive' : '' ?>">
-                                        <td class="tooltip-advanced" data-tooltip="<?= htmlspecialchars($item['item']) ?>">
-                                            <span class="text-truncate" style="max-width: 200px; display: inline-block;">
-                                                <?= htmlspecialchars($item['item']) ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="tag tag-<?= strtolower(str_replace(' ', '-', $item['categoria'])) ?>">
-                                                <?= htmlspecialchars($item['categoria']) ?>
-                                            </span>
-                                        </td>
-                                        <td class="font-mono">$<?= number_format($item['costoUSD'], 4) ?></td>
-                                        <td class="font-mono"><?= $margen ?>%</td>
-                                        <td>
-                                            <div class="margin-control">
-                                                <input type="number" 
-                                                       class="margin-input" 
-                                                       value="<?= $margen ?>" 
-                                                       min="0" 
-                                                       max="99" 
-                                                       step="1" 
-                                                       data-id="<?= $itemId ?>" 
-                                                       data-original="<?= $margen ?>"
-                                                       <?= !$activo ? 'disabled' : '' ?>
-                                                       onchange="actualizarMargenItem(<?= $itemId ?>, this.value)">
-                                                <span class="margin-unit">%</span>
-                                            </div>
-                                        </td>
-                                        <td class="font-mono precio-venta-<?= $itemId ?>">$<?= number_format($precioVenta, 4) ?></td>
-                                        <td>
-                                            <span class="margin-indicator diferencia-<?= $itemId ?> <?= $diferencia > 0 ? 'positive' : ($diferencia < 0 ? 'negative' : 'neutral') ?>">
-                                                <?= $diferencia > 0 ? '+' : '' ?><?= $diferencia ?>%
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="status-indicator <?= $item['margen_custom'] ? 'status-warning' : 'status-active' ?>">
-                                                <?= $item['margen_custom'] ? 'Personalizado' : 'Global' ?>
-                                            </span>
-                                            <?php if (!$activo): ?>
-                                                <br><small class="status-indicator status-inactive">Inactivo</small>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('item-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Item</button>
                 </div>
-            </div>
+            </form>
         </div>
+    </div>
 
-        <!-- Tab: Análisis por Categorías -->
-        <div id="categorias-tab" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Análisis por Categorías</h3>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" onclick="openModal('categoria-modal')">
-                            <span>➕</span> Nueva Categoría
-                        </button>
-                        <button class="btn btn-secondary" onclick="exportarAnalisisCategorias()">
-                            <span>📊</span> Exportar Análisis
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Gráfico de distribución (placeholder) -->
-                <div class="chart-container" style="margin-bottom: 2rem; padding: 1rem; background: var(--background); border-radius: 8px;">
-                    <h4>Distribución por Categorías</h4>
-                    <div id="categorias-chart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
-                        📊 Gráfico de distribución por categorías<br>
-                        <small>(Se puede implementar con Chart.js o similar)</small>
-                    </div>
-                </div>
-
-                <!-- Tabla de Análisis por Categorías -->
-                <div class="admin-table">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Categoría</th>
-                                    <th>Productos Únicos</th>
-                                    <th>Total Items</th>
-                                    <th>Items Activos</th>
-                                    <th>Costo Promedio</th>
-                                    <th>Margen Promedio</th>
-                                    <th>Precio Promedio</th>
-                                    <th>Participación</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="categorias-table">
-                                <?php
-                                $categoriaStats = [];
-                                foreach ($costos as $item) {
-                                    $cat = $item['categoria'];
-                                    if (!isset($categoriaStats[$cat])) {
-                                        $categoriaStats[$cat] = [
-                                            'items' => [],
-                                            'productos' => [],
-                                            'activos' => 0
-                                        ];
-                                    }
-                                    $categoriaStats[$cat]['items'][] = $item;
-                                    $categoriaStats[$cat]['productos'][$item['tipo_prod']] = true;
-                                    if ($item['activo'] ?? true) {
-                                        $categoriaStats[$cat]['activos']++;
-                                    }
-                                }
-
-                                foreach ($categoriaStats as $catName => $stats):
-                                    $itemsCount = count($stats['items']);
-                                    $productosCount = count($stats['productos']);
-                                    $activosCount = $stats['activos'];
-                                    $participacion = ($itemsCount / max($totalItems, 1)) * 100;
-                                    
-                                    $costoPromedio = 0;
-                                    $margenes = [];
-                                    $precios = [];
-                                    
-                                    foreach ($stats['items'] as $item) {
-                                        $costoPromedio += $item['costoUSD'];
-                                        $margen = $item['margen_custom'] ?? $margenGlobal;
-                                        $precio = $item['costoUSD'] > 0 ? $item['costoUSD'] / (1 - $margen / 100) : 0;
-                                        $margenes[] = $margen;
-                                        $precios[] = $precio;
-                                    }
-                                    
-                                    $costoPromedio = $costoPromedio / max($itemsCount, 1);
-                                    $margenPromedioCat = array_sum($margenes) / max(count($margenes), 1);
-                                    $precioPromedio = array_sum($precios) / max(count($precios), 1);
-                                ?>
-                                    <tr data-categoria="<?= htmlspecialchars($catName) ?>">
-                                        <td>
-                                            <span class="tag tag-<?= strtolower(str_replace(' ', '-', $catName)) ?>">
-                                                <?= htmlspecialchars($catName) ?>
-                                            </span>
-                                        </td>
-                                        <td class="text-center"><?= $productosCount ?></td>
-                                        <td class="text-center">
-                                            <?= $itemsCount ?>
-                                            <?php if ($activosCount !== $itemsCount): ?>
-                                                <br><small class="text-secondary"><?= $activosCount ?> activos</small>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center"><?= $activosCount ?></td>
-                                        <td class="font-mono">$<?= number_format($costoPromedio, 2) ?></td>
-                                        <td class="text-center"><?= number_format($margenPromedioCat, 1) ?>%</td>
-                                        <td class="font-mono">$<?= number_format($precioPromedio, 2) ?></td>
-                                        <td>
-                                            <div class="progress-container">
-                                                <div class="progress-label">
-                                                    <span><?= number_format($participacion, 1) ?>%</span>
-                                                </div>
-                                                <div class="progress-bar">
-                                                    <div class="progress-fill" style="width: <?= $participacion ?>%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="table-actions-cell">
-                                            <button class="btn action-btn-edit" onclick="generarReporteCategoria('<?= htmlspecialchars($catName) ?>')" title="Generar reporte">
-                                                📊
-                                            </button>
-                                            <button class="btn action-btn-warning" onclick="editarCategoria('<?= htmlspecialchars($catName) ?>')" title="Editar categoría">
-                                                ✏️
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    <!-- Modal de estadísticas detalladas -->
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Estadísticas Detalladas</h3>
+                <button onclick="closeModal('stats-modal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
             </div>
-        </div>
-
-        <!-- Tab: Configuración -->
-        <div id="configuracion-tab" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Configuración del Sistema</h3>
+            
+            <div class="modal-body">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value"><?php echo $estadisticasDetalladas['totalFijos']; ?></span>
+                        <div class="stat-label">Items Fijos</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <span class="stat-value"><?php echo $estadisticasDetalladas['totalVariables']; ?></span>
+                        <div class="stat-label">Items Variables</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <span class="stat-value">$<?php echo number_format($estadisticasDetalladas['costoTotal'], 0); ?></span>
+                        <div class="stat-label">Costo Total</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <span class="stat-value">$<?php echo number_format($estadisticasDetalladas['costoPromedio'], 2); ?></span>
+                        <div class="stat-label">Costo Promedio</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <span class="stat-value"><?php echo $estadisticasDetalladas['categorias']; ?></span>
+                        <div class="stat-label">Categorías</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <span class="stat-value"><?php echo $estadisticasDetalladas['grupos']; ?></span>
+                        <div class="stat-label">Grupos</div>
+                    </div>
                 </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Configuración de Márgenes</label>
-                        <div class="alert alert-info">
-                            <span class="alert-icon">ℹ️</span>
-                            <div class="alert-content">
-                                <div class="alert-message">
-                                    El margen global se aplica automáticamente a todos los items que no tengan un margen personalizado.
+                
+                <!-- Estadísticas por grupo -->
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Estadísticas por Grupo</h4>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <?php foreach ($estadisticasGrupos as $grupo => $stats): ?>
+                            <div style="padding: 1rem; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem;">
+                                <div style="font-weight: 600; margin-bottom: 0.5rem;"><?php echo htmlspecialchars($grupo); ?></div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                                    <div>📊 <?php echo $stats['cantidad']; ?> items</div>
+                                    <div>💰 $<?php echo number_format($stats['costoTotal'], 0); ?></div>
+                                    <div>📈 $<?php echo number_format($stats['costoPromedio'], 2); ?> avg</div>
+                                    <div>✅ <?php echo $stats['activos']; ?> activos</div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Backup y Restauración</label>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <button class="btn btn-secondary" onclick="crearBackup()" title="Crear backup (Ctrl+B)">
-                                <span>💾</span> Crear Backup
-                            </button>
-                            <button class="btn btn-secondary" onclick="restaurarBackup()">
-                                <span>📥</span> Restaurar Backup
-                            </button>
-                            <button class="btn btn-warning" onclick="limpiarDatos()">
-                                <span>🗑️</span> Limpiar Todos los Datos
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Herramientas de Desarrollo</label>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <button class="btn btn-secondary" onclick="validarIntegridadDatos()">
-                                <span>🔍</span> Validar Integridad
-                            </button>
-                            <button class="btn btn-secondary" onclick="regenerarIds()">
-                                <span>🔄</span> Regenerar IDs
-                            </button>
-                            <button class="btn btn-secondary" onclick="mostrarInformacionSistema()">
-                                <span>📋</span> Info del Sistema
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Estadísticas del Sistema</label>
-                        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
-                            <div class="stat-card">
-                                <div class="stat-value"><?= number_format(filesize('costos.json') / 1024, 1) ?> KB</div>
-                                <div class="stat-label">Tamaño del Archivo</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value"><?= date('d/m/Y H:i', filemtime('costos.json')) ?></div>
-                                <div class="stat-label">Última Modificación</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value"><?= count($categorias) ?></div>
-                                <div class="stat-label">Categorías Únicas</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value"><?= count($tiposProducto) ?></div>
-                                <div class="stat-label">Tipos de Producto</div>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('stats-modal')">Cerrar</button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal: Nuevo/Editar Item -->
-    <div id="item-modal" class="modal">
+    <!-- Modal de gestión de grupos -->
+    <div id="grupos-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="item-modal-title">Nuevo Item</h3>
-                <button class="close-btn" onclick="closeModal('item-modal')">&times;</button>
+                <h3>Gestionar Grupos</h3>
+                <button onclick="closeModal('grupos-modal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
             </div>
-
+            
             <div class="modal-body">
-                <form id="item-form" method="post">
-                    <input type="hidden" name="action" value="save_item">
-                    <input type="hidden" name="item_id" id="edit-item-id">
-                    
-                    <div class="form-grid">
-                        <div class="form-group required">
-                            <label for="tipo_costo">
-                                <span>💼</span> Tipo de Costo
-                            </label>
-                            <select name="tipo_costo" id="tipo_costo" required>
-                                <option value="">Seleccionar tipo...</option>
-                                <option value="Fijo">💰 Fijo - Costo constante mensual</option>
-                                <option value="Variable">📊 Variable - Depende del uso</option>
-                            </select>
-                            <span class="help-text">Fijo: costo constante mensual. Variable: depende del uso o cantidad.</span>
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="recurrencia">
-                                <span>🔄</span> Recurrencia
-                            </label>
-                            <select name="recurrencia" id="recurrencia" required>
-                                <option value="">Seleccionar recurrencia...</option>
-                                <option value="Mensual">📅 Mensual - Se cobra cada mes</option>
-                                <option value="Unico">⚡ Único - Costo de una sola vez</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="categoria">
-                                <span>🏷️</span> Categoría
-                            </label>
-                            <select name="categoria" id="categoria" required>
-                                <option value="">Seleccionar categoría...</option>
-                                <?php foreach ($categorias as $categoria): ?>
-                                    <option value="<?= htmlspecialchars($categoria) ?>">
-                                        <?= htmlspecialchars($categoria) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                                <option value="Plataforma">🏗️ Plataforma</option>
-                                <option value="Canal">📡 Canal</option>
-                                <option value="Servicios">🛠️ Servicios</option>
-                                <option value="Hardware">💻 Hardware</option>
-                                <option value="Software">💿 Software</option>
-                                <option value="Licencias">📜 Licencias</option>
-                                <option value="Integracion">🔗 Integración</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="tipo_prod">
-                                <span>🎯</span> Tipo de Producto
-                            </label>
-                            <input type="text" name="tipo_prod" id="tipo_prod" required 
-                                   placeholder="Ej: Omnicanalidad, WhatsApp, Email, IA"
-                                   list="tipos-producto-list">
-                            <datalist id="tipos-producto-list">
-                                <option value="Omnicanalidad">
-                                <option value="WhatsApp">
-                                <option value="Email">
-                                <option value="SMS">
-                                <option value="IA">
-                                <option value="CiberSecurity">
-                                <option value="VoIP">
-                                <option value="Chat">
-                                <option value="Video">
-                            </datalist>
-                            <span class="help-text">Categoría específica del producto o servicio</span>
-                        </div>
-
-                        <div class="form-group required full-width">
-                            <label for="item">
-                                <span>📝</span> Nombre del Item
-                            </label>
-                            <input type="text" name="item" id="item" required 
-                                   placeholder="Descripción detallada y específica del item">
-                            <span class="help-text">Descripción completa que identifique claramente el item</span>
-                        </div>
-
-                        <div class="form-group required">
-                            <label for="costoUSD">
-                                <span>💵</span> Costo USD
-                            </label>
-                            <div class="input-with-icon">
-                                <span class="icon">$</span>
-                                <input type="number" name="costoUSD" id="costoUSD" required 
-                                       step="0.0001" min="0" placeholder="0.0000">
-                            </div>
-                            <span class="help-text">Costo en dólares americanos (hasta 4 decimales)</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="margen_custom">
-                                <span>📈</span> Margen Personalizado %
-                            </label>
-                            <div class="input-with-icon">
-                                <span class="icon">%</span>
-                                <input type="number" name="margen_custom" id="margen_custom" 
-                                       step="1" min="0" max="99" placeholder="Opcional">
-                            </div>
-                            <span class="help-text">Dejar vacío para usar margen global (<?= $margenGlobal ?>%)</span>
-                        </div>
+                <div class="form-group">
+                    <label for="nuevo-grupo-nombre">Crear Nuevo Grupo</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="nuevo-grupo-nombre" placeholder="Nombre del grupo..." style="flex: 1;">
+                        <button class="btn btn-primary" onclick="crearNuevoGrupo()">Crear</button>
                     </div>
-
-                    <div class="form-group full-width">
-                        <label for="notas">
-                            <span>📋</span> Notas / Observaciones
-                        </label>
-                        <textarea name="notas" id="notas" rows="3" 
-                                  placeholder="Información adicional, especificaciones técnicas, condiciones especiales..."></textarea>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h4>Grupos Existentes</h4>
+                    <div id="lista-grupos">
+                        <?php foreach ($estadisticasGrupos as $grupo => $stats): ?>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.5rem;">
+                                <div>
+                                    <strong><?php echo htmlspecialchars($grupo); ?></strong>
+                                    <span style="color: var(--text-secondary); margin-left: 0.5rem;">(<?php echo $stats['cantidad']; ?> items)</span>
+                                </div>
+                                <button class="btn btn-danger" onclick="eliminarGrupo('<?php echo htmlspecialchars($grupo); ?>')" 
+                                        <?php echo $stats['cantidad'] > 0 ? 'disabled title="No se puede eliminar un grupo con items"' : ''; ?>>
+                                    🗑️
+                                </button>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                </form>
+                </div>
             </div>
-
+            
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('item-modal')">
-                    Cancelar
-                </button>
-                <button type="submit" form="item-form" class="btn btn-primary">
-                    <span>💾</span> Guardar Item
-                </button>
+                <button class="btn btn-secondary" onclick="closeModal('grupos-modal')">Cerrar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Nueva Categoría -->
-    <div id="categoria-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Nueva Categoría</h3>
-                <button class="close-btn" onclick="closeModal('categoria-modal')">&times;</button>
-            </div>
-
-            <div class="modal-body">
-                <form id="categoria-form">
-                    <div class="form-group required">
-                        <label for="nueva_categoria">Nombre de la Categoría</label>
-                        <input type="text" id="nueva_categoria" required 
-                               placeholder="Ej: Inteligencia Artificial, Cloud Computing">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="categoria_descripcion">Descripción</label>
-                        <textarea id="categoria_descripcion" rows="3" 
-                                  placeholder="Descripción detallada de la categoría y sus características..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="categoria_margen">Margen por Defecto %</label>
-                        <input type="number" id="categoria_margen" step="1" min="0" max="99" 
-                               placeholder="50" value="<?= $margenGlobal ?>">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="categoria_color">Color Identificativo</label>
-                        <input type="color" id="categoria_color" value="#2563eb">
-                        <span class="help-text">Color para identificar visualmente la categoría</span>
-                    </div>
-                </form>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('categoria-modal')">
-                    Cancelar
-                </button>
-                <button type="submit" form="categoria-form" class="btn btn-primary">
-                    <span>➕</span> Crear Categoría
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Formularios ocultos para acciones AJAX -->
-    <form id="delete-form" method="post" style="display: none;">
-        <input type="hidden" name="action" value="delete_item">
-        <input type="hidden" name="item_id" id="delete-item-id">
+    <!-- Formularios ocultos -->
+    <form id="bulk-form" method="POST" action="" style="display: none;">
+        <input type="hidden" name="action" value="bulk_update_grupo">
+        <input type="hidden" id="bulk-selected-items" name="selected_items" value="">
+        <input type="hidden" id="bulk-nuevo-grupo" name="nuevo_grupo" value="">
     </form>
 
-    <form id="margins-form" method="post" style="display: none;">
-        <input type="hidden" name="action" value="save_margins">
-        <input type="hidden" name="margins_data" id="margins-data">
-    </form>
-
-    <form id="toggle-status-form" method="post" style="display: none;">
-        <input type="hidden" name="action" value="toggle_item_status">
-        <input type="hidden" name="item_id" id="toggle-item-id">
-    </form>
-
-    <form id="bulk-action-form" method="post" style="display: none;">
-        <input type="hidden" name="action" value="bulk_update">
-        <input type="hidden" name="selected_items" id="bulk-selected-items">
-        <input type="hidden" name="bulk_type" id="bulk-type">
-        <input type="hidden" name="bulk_value" id="bulk-value">
-    </form>
-
-    <!-- Scripts -->
     <script src="admin.js"></script>
     <script>
-        // Funciones específicas de PHP
-        function toggleItemStatus(id) {
-            if (confirm('¿Cambiar el estado de este item?')) {
-                document.getElementById('toggle-item-id').value = id;
-                document.getElementById('toggle-status-form').submit();
-            }
-        }
+        // JavaScript específico para la gestión de grupos
+        let seleccionMasivaActiva = false;
+        let itemsSeleccionados = [];
 
-        function limpiarDatos() {
-            if (confirm('⚠️ ADVERTENCIA ⚠️\n\nEsto eliminará TODOS los datos de forma permanente.\n\n¿Estás absolutamente seguro?')) {
-                if (confirm('Esta acción NO se puede deshacer.\n\n¿Continuar?')) {
-                    // Implementar limpieza de datos
-                    alert('Funcionalidad de limpieza no implementada por seguridad');
-                }
-            }
-        }
-
-        function validarIntegridadDatos() {
-            // Implementar validación
-            let errores = [];
-            let items = <?= json_encode($costos) ?>;
+        function cambiarTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
             
-            items.forEach((item, index) => {
-                if (!item.item || item.item.trim() === '') {
-                    errores.push(`Item ${index + 1}: Nombre vacío`);
-                }
-                if (!item.costoUSD || item.costoUSD < 0) {
-                    errores.push(`Item ${index + 1}: Costo inválido`);
-                }
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
             });
-
-            if (errores.length > 0) {
-                alert('Errores encontrados:\n\n' + errores.join('\n'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function mostrarEstadisticasDetalladas() {
+            openModal('stats-modal');
+        }
+        
+        function mostrarGestionGrupos() {
+            openModal('grupos-modal');
+        }
+        
+        function toggleSeleccionMasiva() {
+            seleccionMasivaActiva = !seleccionMasivaActiva;
+            
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            const selectAll = document.getElementById('select-all');
+            const bulkActions = document.getElementById('bulk-actions');
+            const btnSeleccion = document.getElementById('btn-seleccion');
+            
+            if (seleccionMasivaActiva) {
+                checkboxes.forEach(cb => cb.style.display = 'block');
+                selectAll.style.display = 'block';
+                bulkActions.style.display = 'block';
+                btnSeleccion.innerHTML = '<span>❌</span> Cancelar Selección';
             } else {
-                mostrarNotificacion('✅ Todos los datos son válidos', 'success');
+                checkboxes.forEach(cb => {
+                    cb.style.display = 'none';
+                    cb.checked = false;
+                });
+                selectAll.style.display = 'none';
+                selectAll.checked = false;
+                bulkActions.style.display = 'none';
+                btnSeleccion.innerHTML = '<span>☑️</span> Selección Múltiple';
+                itemsSeleccionados = [];
+                actualizarContadorSeleccionados();
             }
         }
-
-        function regenerarIds() {
-            if (confirm('¿Regenerar todos los IDs? Esto puede afectar referencias externas.')) {
-                alert('Funcionalidad no implementada');
+        
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+            
+            actualizarItemsSeleccionados();
+        }
+        
+        function actualizarItemsSeleccionados() {
+            const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+            itemsSeleccionados = Array.from(checkboxes).map(cb => cb.value);
+            actualizarContadorSeleccionados();
+        }
+        
+        function actualizarContadorSeleccionados() {
+            document.getElementById('selected-count').textContent = `${itemsSeleccionados.length} items seleccionados`;
+        }
+        
+        function aplicarCambiosMasivos() {
+            if (itemsSeleccionados.length === 0) {
+                alert('Selecciona al menos un item');
+                return;
+            }
+            
+            const nuevoGrupo = document.getElementById('bulk-grupo').value;
+            if (!nuevoGrupo) {
+                alert('Selecciona un grupo');
+                return;
+            }
+            
+            if (confirm(`¿Cambiar ${itemsSeleccionados.length} items al grupo "${nuevoGrupo}"?`)) {
+                document.getElementById('bulk-selected-items').value = JSON.stringify(itemsSeleccionados);
+                document.getElementById('bulk-nuevo-grupo').value = nuevoGrupo;
+                document.getElementById('bulk-form').submit();
             }
         }
+        
+        function cancelarSeleccionMasiva() {
+            toggleSeleccionMasiva();
+        }
+        
+        function manejarCambioGrupo() {
+            const select = document.getElementById('grupo');
+            const inputNuevo = document.getElementById('nuevo-grupo');
+            
+            if (select.value === 'nuevo') {
+                inputNuevo.style.display = 'block';
+                inputNuevo.focus();
+            } else {
+                inputNuevo.style.display = 'none';
+                inputNuevo.value = '';
+            }
+        }
+        
+        function confirmarNuevoGrupo() {
+            const inputNuevo = document.getElementById('nuevo-grupo');
+            const select = document.getElementById('grupo');
+            
+            if (inputNuevo.value.trim()) {
+                const option = document.createElement('option');
+                option.value = inputNuevo.value.trim();
+                option.textContent = inputNuevo.value.trim();
+                option.selected = true;
+                
+                // Insertar antes de la opción "nuevo"
+                select.insertBefore(option, select.lastElementChild);
+                inputNuevo.style.display = 'none';
+            } else {
+                select.value = '';
+                inputNuevo.style.display = 'none';
+            }
+        }
+        
+        function toggleGrupo(grupo) {
+            const section = document.querySelector(`[data-grupo="${grupo}"]`);
+            const items = section.querySelector('.grupo-items');
+            const icon = section.querySelector('.toggle-icon');
+            
+            if (items.style.display === 'none') {
+                items.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                items.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+        
+        function expandirTodosGrupos() {
+            document.querySelectorAll('.grupo-items').forEach(items => {
+                items.style.display = 'block';
+            });
+            document.querySelectorAll('.toggle-icon').forEach(icon => {
+                icon.textContent = '▼';
+            });
+        }
+        
+        function contraerTodosGrupos() {
+            document.querySelectorAll('.grupo-items').forEach(items => {
+                items.style.display = 'none';
+            });
+            document.querySelectorAll('.toggle-icon').forEach(icon => {
+                icon.textContent = '▶';
+            });
+        }
+        
+        function crearNuevoGrupo() {
+            const nombre = document.getElementById('nuevo-grupo-nombre').value.trim();
+            if (!nombre) {
+                alert('Ingresa un nombre para el grupo');
+                return;
+            }
+            
+            // Aquí iría la lógica para crear el grupo
+            console.log('Creando grupo:', nombre);
+            alert('Funcionalidad en desarrollo');
+        }
+        
+        function eliminarGrupo(grupo) {
+            if (confirm(`¿Eliminar el grupo "${grupo}"? (Solo si no tiene items)`)) {
+                console.log('Eliminando grupo:', grupo);
+                alert('Funcionalidad en desarrollo');
+            }
+        }
+        
+        function limpiarFiltros() {
+            document.getElementById('search-items').value = '';
+            document.getElementById('filter-tipo').value = '';
+            document.getElementById('filter-categoria').value = '';
+            document.getElementById('filter-grupo').value = '';
+            aplicarFiltros();
+        }
+        
+        function aplicarFiltros() {
+            const searchTerm = document.getElementById('search-items').value.toLowerCase();
+            const tipoFilter = document.getElementById('filter-tipo').value;
+            const categoriaFilter = document.getElementById('filter-categoria').value;
+            const grupoFilter = document.getElementById('filter-grupo').value;
 
-        function mostrarInformacionSistema() {
-            const info = {
-                'Total de items': <?= $totalItems ?>,
-                'Items activos': <?= $itemsActivos ?>,
-                'Categorías': <?= count($categorias) ?>,
-                'Tipos de producto': <?= count($tiposProducto) ?>,
-                'Tamaño del archivo': '<?= number_format(filesize("costos.json") / 1024, 1) ?> KB',
-                'Última modificación': '<?= date("d/m/Y H:i", filemtime("costos.json")) ?>'
-            };
+            const rows = document.querySelectorAll('#items-table .item-row');
+            let visibleCount = 0;
 
-            let mensaje = 'INFORMACIÓN DEL SISTEMA\n\n';
-            Object.entries(info).forEach(([key, value]) => {
-                mensaje += `${key}: ${value}\n`;
+            rows.forEach(row => {
+                const tipo = row.dataset.tipo;
+                const categoria = row.dataset.categoria;
+                const grupo = row.dataset.grupo;
+                const itemText = row.textContent.toLowerCase();
+
+                let visible = true;
+
+                // Filtro de búsqueda
+                if (searchTerm && !itemText.includes(searchTerm)) {
+                    visible = false;
+                }
+
+                // Filtros de selección
+                if (tipoFilter && tipo !== tipoFilter) visible = false;
+                if (categoriaFilter && categoria !== categoriaFilter) visible = false;
+                if (grupoFilter && grupo !== grupoFilter) visible = false;
+
+                // Mostrar/ocultar fila
+                row.style.display = visible ? '' : 'none';
+                if (visible) visibleCount++;
             });
 
-            alert(mensaje);
+            console.log(`Mostrando ${visibleCount} de ${rows.length} items`);
+        }
+        
+        function editarItem(id) {
+            console.log('Editando item:', id);
+            
+            // Buscar datos del item en la tabla
+            const row = document.querySelector(`[data-id="${id}"]`);
+            if (!row) return;
+
+            // Llenar formulario con datos existentes
+            const cells = row.querySelectorAll('td');
+            
+            document.getElementById('edit-item-id').value = id;
+            
+            // Extraer valores de las celdas
+            const tipo = row.dataset.tipo;
+            const categoria = row.dataset.categoria;
+            const grupo = row.dataset.grupo;
+            
+            // Llenar el formulario
+            document.getElementById('tipo_costo').value = tipo;
+            document.getElementById('categoria').value = categoria;
+            document.getElementById('grupo').value = grupo;
+            
+            // Los demás campos se pueden extraer del contenido de las celdas
+            // (esto es una implementación simplificada)
+            
+            document.getElementById('item-modal-title').textContent = 'Editar Item';
+            openModal('item-modal');
+        }
+        
+        function eliminarItem(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este item?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="action" value="delete_item">
+                    <input type="hidden" name="item_id" value="${id}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function aplicarMargenGlobal() {
+            const nuevoMargen = document.getElementById('margen-global').value;
+            if (confirm(`¿Aplicar margen del ${nuevoMargen}% a todos los items sin margen personalizado?`)) {
+                console.log('Aplicando margen global:', nuevoMargen);
+                // Implementar lógica de margen global
+            }
+        }
+        
+        function guardarMargenes() {
+            console.log('Guardando márgenes...');
+            // Implementar lógica de guardado de márgenes
+        }
+        
+        function exportarItems() {
+            console.log('Exportando items...');
+            // Implementar exportación
+        }
+        
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Ocultar alertas automáticamente
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('#success-alert, #error-alert');
-            alerts.forEach(alert => {
-                alert.style.opacity = '0';
-                alert.style.transform = 'translateY(-20px)';
-                setTimeout(() => {
-                    alert.style.display = 'none';
-                }, 300);
-            });
-        }, 5000);
-
-        // Inicializar tooltips para elementos con data-tooltip
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = '';
+            
+            if (modalId === 'item-modal') {
+                // Limpiar formulario
+                document.getElementById('item-form').reset();
+                document.getElementById('edit-item-id').value = '';
+                document.getElementById('item-modal-title').textContent = 'Nuevo Item';
+                document.getElementById('nuevo-grupo').style.display = 'none';
+            }
+        }
+        
+        // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Agregar funcionalidad adicional específica de PHP aquí
+            // Filtros en tiempo real
+            document.getElementById('search-items').addEventListener('input', aplicarFiltros);
+            document.getElementById('filter-tipo').addEventListener('change', aplicarFiltros);
+            document.getElementById('filter-categoria').addEventListener('change', aplicarFiltros);
+            document.getElementById('filter-grupo').addEventListener('change', aplicarFiltros);
+            
+            // Checkboxes para selección múltiple
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('item-checkbox')) {
+                    actualizarItemsSeleccionados();
+                }
+            });
         });
+        
+        // Auto-ocultar alertas
+        setTimeout(() => {
+            const alert = document.getElementById('success-alert');
+            if (alert) {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }, 3000);
     </script>
+    
+    <style>
+        /* Estilos adicionales para los grupos */
+        .grupos-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .grupo-section {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .grupo-header {
+            background: var(--background);
+            padding: 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+        }
+        
+        .grupo-header:hover {
+            background: var(--surface-hover);
+        }
+        
+        .grupo-info h4 {
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .toggle-icon {
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+        
+        .grupo-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .grupo-stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .grupo-items {
+            background: var(--surface);
+        }
+        
+        .grupo-items table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .grupo-items th,
+        .grupo-items td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .grupo-items th {
+            background: var(--background);
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .bulk-actions {
+            background: var(--surface-hover);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Responsive para grupos */
+        @media (max-width: 768px) {
+            .grupo-stats {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .grupo-items th,
+            .grupo-items td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+            
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+    </style>
 </body>
 </html>
