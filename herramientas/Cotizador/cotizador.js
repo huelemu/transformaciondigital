@@ -191,25 +191,45 @@ function exportarCotizacion() {
         return;
     }
 
-    // Preparar datos para exportación
+    // Preparar datos para exportación con estructura mejorada
     const data = {
         cliente: cliente,
         proyecto: proyecto,
         margen: document.getElementById('margen').value,
         fecha: new Date().toLocaleDateString('es-ES'),
         hora: new Date().toLocaleTimeString('es-ES'),
-        items: exportRows,
+        items: exportRows.map(item => ({
+            tipo_costo: item.tipo_costo || item.tipo || '',
+            recurrencia: item.recurrencia || 'Mensual',
+            categoria: item.categoria || '',
+            tipo_prod: item.tipo_prod || item.tipoProd || '',
+            item: item.item || '',
+            costoUSD: parseFloat(item.costoUSD) || 0,
+            cantidad: parseInt(item.cantidad) || 0,
+            subtotal: parseFloat(item.subtotal) || 0,
+            precioVenta: parseFloat(item.precioVenta) || 0
+        })),
         resumen: {
             itemsSeleccionados: exportRows.length,
-            costoTotal: exportRows.reduce((sum, item) => sum + item.subtotal, 0),
-            totalCotizacion: exportRows.reduce((sum, item) => sum + item.precioVenta, 0)
+            costoTotal: exportRows.reduce((sum, item) => sum + (parseFloat(item.subtotal) || 0), 0),
+            totalCotizacion: exportRows.reduce((sum, item) => sum + (parseFloat(item.precioVenta) || 0), 0)
         }
     };
     
-    document.getElementById('exportData').value = JSON.stringify(data);
-    document.getElementById('exportForm').submit();
+    // Validar datos antes de enviar
+    if (data.items.length === 0) {
+        mostrarNotificacion('Error: No hay items válidos para exportar', 'error');
+        return;
+    }
     
-    mostrarNotificacion('Exportando cotización...', 'info');
+    try {
+        document.getElementById('exportData').value = JSON.stringify(data);
+        document.getElementById('exportForm').submit();
+        mostrarNotificacion('Generando archivo Excel...', 'info');
+    } catch (error) {
+        console.error('Error al preparar exportación:', error);
+        mostrarNotificacion('Error al preparar los datos para exportación', 'error');
+    }
 }
 
 // ================================
