@@ -1,12 +1,29 @@
 <?php
-// exportar.php - Versión sin errores de PhpSpreadsheet
-error_reporting(E_ERROR | E_WARNING | E_PARSE); // Ocultar notices
+// exportar.php - Exportar cotizaciones a Excel (PhpSpreadsheet) o CSV (fallback)
+// SkyTel Cotizador
 
+// Mostrar solo errores importantes
+error_reporting(E_ERROR | E_WARNING | E_PARSE); 
+
+// ===============================
+// IMPORTS de PhpSpreadsheet
+// ===============================
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+
+// ===============================
+// VALIDACIÓN DE DATOS DE ENTRADA
+// ===============================
 if (!isset($_POST['data']) || empty($_POST['data'])) {
     die('Error: No se recibieron datos para exportar.');
 }
 
-// Intentar PhpSpreadsheet pero con fallback inmediato si hay problemas
+// ===============================
+// AUTOLOAD DE COMPOSER
+// ===============================
 $useExcel = false;
 $autoloadPaths = [
     __DIR__ . '/../../vendor/autoload.php',
@@ -22,62 +39,66 @@ foreach ($autoloadPaths as $path) {
                 $useExcel = true;
             }
         } catch (Exception $e) {
-            // Si hay cualquier error, usar CSV
-            $useExcel = false;
+            $useExcel = false; // Si falla, forzar CSV
         }
         break;
     }
 }
 
-// Decodificar datos una sola vez
+// ===============================
+// DECODIFICAR DATOS JSON
+// ===============================
 $rawData = json_decode($_POST['data'], true);
 if (json_last_error() !== JSON_ERROR_NONE) {
     die('Error: Datos JSON inválidos - ' . json_last_error_msg());
 }
 
-// Extraer información común
-$cliente = $rawData['cliente'] ?? 'Cliente no especificado';
+// ===============================
+// VARIABLES COMUNES
+// ===============================
+$cliente  = $rawData['cliente']  ?? 'Cliente no especificado';
 $proyecto = $rawData['proyecto'] ?? 'Proyecto no especificado';
-$margen = $rawData['margen'] ?? '50';
-$fecha = $rawData['fecha'] ?? date('d/m/Y');
-$hora = $rawData['hora'] ?? date('H:i:s');
-$items = $rawData['items'] ?? $rawData;
+$margen   = $rawData['margen']   ?? '50';
+$fecha    = $rawData['fecha']    ?? date('d/m/Y');
+$hora     = $rawData['hora']     ?? date('H:i:s');
+$items    = $rawData['items']    ?? $rawData;
 
-// Decidir formato según capacidades
+// ===============================
+// DECISIÓN DE FORMATO
+// ===============================
 if ($useExcel) {
     try {
         crearExcelSeguro();
     } catch (Exception $e) {
-        // Si falla Excel, usar CSV
-        crearCSV();
+        crearCSV(); // Fallback si falla PhpSpreadsheet
     }
 } else {
     crearCSV();
 }
 
+// ===============================
+// FUNCIONES
+// ===============================
+
+/**
+ * Crear Excel con PhpSpreadsheet
+ */
 function crearExcelSeguro() {
     global $cliente, $proyecto, $margen, $fecha, $hora, $items;
-    
-    // Importar clases solo cuando las necesitemos
-    use PhpOffice\PhpSpreadsheet\Spreadsheet;
-    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-    use PhpOffice\PhpSpreadsheet\Style\Alignment;
-    use PhpOffice\PhpSpreadsheet\Style\Border;
-    use PhpOffice\PhpSpreadsheet\Style\Fill;
     
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     
-    // Configurar propiedades básicas
+    // Propiedades del archivo
     $spreadsheet->getProperties()
         ->setCreator('SkyTel Cotizador')
         ->setTitle('Cotización - ' . $cliente);
     
-    // ENCABEZADO SIMPLE
+    // ENCABEZADO PRINCIPAL
     $sheet->setCellValue('A1', 'COTIZACIÓN SKYTEL');
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
     
-    // INFORMACIÓN BÁSICA
+    // INFORMACIÓN GENERAL
     $sheet->setCellValue('A3', 'Cliente: ' . $cliente);
     $sheet->setCellValue('A4', 'Proyecto: ' . $proyecto);
     $sheet->setCellValue('A5', 'Fecha: ' . $fecha);
@@ -92,25 +113,25 @@ function crearExcelSeguro() {
         $col++;
     }
     
-    // DATOS - Convertir todo a string para evitar errores de tipo
+    // DATOS
     $row = 9;
     $total = 0;
     
     foreach ($items as $item) {
-        $tipo = (string)($item['tipo_costo'] ?? $item['tipo'] ?? '');
-        $categoria = (string)($item['categoria'] ?? '');
-        $itemDesc = (string)($item['item'] ?? '');
-        $costoUSD = (string)number_format(floatval($item['costoUSD'] ?? 0), 4);
-        $cantidad = (string)intval($item['cantidad'] ?? 0);
-        $subtotal = (string)number_format(floatval($item['subtotal'] ?? 0), 2);
+        $tipo        = (string)($item['tipo_costo'] ?? $item['tipo'] ?? '');
+        $categoria   = (string)($item['categoria'] ?? '');
+        $itemDesc    = (string)($item['item'] ?? '');
+        $costoUSD    = (string)number_format(floatval($item['costoUSD'] ?? 0), 4);
+        $cantidad    = (string)intval($item['cantidad'] ?? 0);
+        $subtotal    = (string)number_format(floatval($item['subtotal'] ?? 0), 2);
         $precioVenta = (string)number_format(floatval($item['precioVenta'] ?? 0), 2);
         
-        // Insertar como strings para evitar errores de tipo
-        $sheet->setCellValueExplicit('A' . $row, $tipo, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('B' . $row, $categoria, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('C' . $row, $itemDesc, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        // Insertar como texto para evitar problemas de formato
+        $sheet->setCellValueExplicit('A' . $row, $tipo,        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B' . $row, $categoria,   \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('C' . $row, $itemDesc,    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('D' . $row, '$' . $costoUSD, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        $sheet->setCellValueExplicit('E' . $row, $cantidad, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('E' . $row, $cantidad,    \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('F' . $row, '$' . $subtotal, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         $sheet->setCellValueExplicit('G' . $row, '$' . $precioVenta, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         
@@ -123,23 +144,27 @@ function crearExcelSeguro() {
     $sheet->setCellValue('G' . $row, '$' . number_format($total, 2));
     $sheet->getStyle('F' . $row . ':G' . $row)->getFont()->setBold(true);
     
-    // Auto-ajustar columnas
+    // Ajustar tamaño de columnas
     foreach (range('A', 'G') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
     
-    // Generar archivo
-    $writer = new Xlsx($spreadsheet);
+    // Nombre de archivo seguro
     $clienteSlug = preg_replace('/[^a-zA-Z0-9]/', '_', $cliente);
     $filename = "Cotizacion_{$clienteSlug}_" . date('Y-m-d_H-i') . ".xlsx";
     
+    // Enviar encabezados y archivo
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
     
+    $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');
 }
 
+/**
+ * Crear archivo CSV (fallback si no hay PhpSpreadsheet)
+ */
 function crearCSV() {
     global $cliente, $proyecto, $margen, $fecha, $hora, $items;
     
@@ -152,10 +177,10 @@ function crearCSV() {
     
     $output = fopen('php://output', 'w');
     
-    // BOM para UTF-8
+    // Agregar BOM para UTF-8
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
     
-    // Información básica
+    // Encabezado de documento
     fputcsv($output, ['COTIZACIÓN SKYTEL']);
     fputcsv($output, ['']);
     fputcsv($output, ['Cliente:', $cliente]);
@@ -165,7 +190,7 @@ function crearCSV() {
     fputcsv($output, ['Margen:', $margen . '%']);
     fputcsv($output, ['']);
     
-    // Encabezados
+    // Encabezados de tabla
     fputcsv($output, [
         'Tipo Costo', 'Recurrencia', 'Categoría', 'Tipo Producto', 
         'Descripción', 'Costo USD', 'Cantidad', 'Subtotal', 'Precio Venta'
@@ -202,4 +227,3 @@ function crearCSV() {
     
     fclose($output);
 }
-?>
