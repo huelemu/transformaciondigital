@@ -1,7 +1,14 @@
 <?php
-// exportar.php - Versión mejorada con manejo de errores
+// exportar.php - Versión corregida sin errores de sintaxis
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+// DECLARACIONES USE AL PRINCIPIO
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 // Verificar que se enviaron datos
 if (!isset($_POST['data']) || empty($_POST['data'])) {
@@ -45,12 +52,6 @@ try {
 }
 
 function crearExcel() {
-    use PhpOffice\PhpSpreadsheet\Spreadsheet;
-    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-    use PhpOffice\PhpSpreadsheet\Style\Alignment;
-    use PhpOffice\PhpSpreadsheet\Style\Border;
-    use PhpOffice\PhpSpreadsheet\Style\Fill;
-
     // Decodificar datos
     $rawData = json_decode($_POST['data'], true);
     
@@ -212,11 +213,6 @@ function crearExcel() {
     $currentRow++;
     $sheet->setCellValue('A' . $currentRow, 'Precio de venta:');
     $sheet->setCellValue('B' . $currentRow, '$' . number_format($total, 2));
-    $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
-    
-    $currentRow++;
-    $sheet->setCellValue('A' . $currentRow, 'Margen de ganancia:');
-    $sheet->setCellValue('B' . $currentRow, '$' . number_format($total - $totalCosto, 2));
     $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true);
 
     // AJUSTAR ANCHO DE COLUMNAS
