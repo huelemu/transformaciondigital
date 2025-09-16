@@ -8,7 +8,7 @@
             "cantidad": "",
             "item": "Inconcert Cloud (por PA operador+staff)",
             "costoUSD": 35,
-            "grupo": "Plataforma Base",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -52,7 +52,7 @@
             "cantidad": "",
             "item": "inConcert Agentes Virtuales (Voz + Texto)",
             "costoUSD": 400,
-            "grupo": "Plataforma Base",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -63,7 +63,7 @@
             "cantidad": "",
             "item": "inConcert WhatsApp - coste mensual",
             "costoUSD": 200,
-            "grupo": "Canales de Comunicación",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -74,7 +74,7 @@
             "cantidad": "",
             "item": "inConcert WhatsApp - setup (1 vez)",
             "costoUSD": 200,
-            "grupo": "Setup Inicial",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -173,7 +173,7 @@
             "cantidad": "",
             "item": "Inconcert - horas desarollo",
             "costoUSD": 65,
-            "grupo": "General",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -206,7 +206,7 @@
             "cantidad": "",
             "item": "inConcert Agentes Virtuales VOZ (Minutos)",
             "costoUSD": 0.09,
-            "grupo": "Setup Inicial",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -217,7 +217,7 @@
             "cantidad": "",
             "item": "inConcert Agentes Virtuales TEXTO (Conversaciones)",
             "costoUSD": 0.12,
-            "grupo": "Setup Inicial",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -237,20 +237,9 @@
             "categoria": "Canal",
             "tipo_prod": "Whatsapp",
             "cantidad": "",
-            "item": "WhatsApp - PY",
+            "item": "WhatsApp - PY - UY",
             "costoUSD": 0.074,
-            "grupo": "Costos Variables",
-            "fecha_migracion": "2025-09-16 21:52:42"
-        },
-        {
-            "tipo_costo": "Variable",
-            "recurrencia": "Mensual",
-            "categoria": "Canal",
-            "tipo_prod": "Whatsapp",
-            "cantidad": "",
-            "item": "WhatsApp - UY",
-            "costoUSD": 0.074,
-            "grupo": "Costos Variables",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -261,7 +250,7 @@
             "cantidad": "",
             "item": "WhatsApp - ARG",
             "costoUSD": 0.0618,
-            "grupo": "Costos Variables",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -272,7 +261,7 @@
             "cantidad": "",
             "item": "WhatsApp - BR (campanhas de marketing)",
             "costoUSD": 0.0625,
-            "grupo": "Costos Variables",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         },
         {
@@ -294,7 +283,7 @@
             "cantidad": "",
             "item": "Mails (250.000)",
             "costoUSD": 30,
-            "grupo": "Costos Variables",
+            "grupo": "Propuesta Habitual",
             "fecha_migracion": "2025-09-16 21:52:42"
         }
     ],
