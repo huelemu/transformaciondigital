@@ -503,7 +503,7 @@ $user = $_SESSION['user'];
                 </ul>
             </div>
 
-            <!-- Videos -->
+            <!-- Capacitaciones -->
             <div class="menu-section">
                 <h1 class="biz-ex-title-process-jml collapsible" onclick="toggleSection('capacitaciones')">
                     📚 Videos 
@@ -511,7 +511,7 @@ $user = $_SESSION['user'];
                 </h1>
                 <ul class="nav-bar collapsible-content" id="capacitaciones-content">
                     <?php
-                    $directorio = "capacitaciones";
+                    $directorio = "Videos";
                     $subdirectorios = [];
 
                     if (is_dir($directorio)) {
