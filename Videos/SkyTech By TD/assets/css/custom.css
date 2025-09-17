@@ -1,19 +1,74 @@
-/* Style the button that is used to open and close the collapsible content */
+/* ================================================
+   CSS REVISADO Y OPTIMIZADO - SkyTech By TD
+   ================================================ */
+
+/* ========================================
+   1. COMPONENTES COLAPSABLES
+   ======================================== */
+
+/* Botón para abrir/cerrar contenido colapsable */
 .c_collapsible {
-  
-  color: #444;
-  cursor: pointer;
-  /* padding: 18px; */
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-  margin-bottom: 10px;
+    color: #444;
+    cursor: pointer;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 15px;
+    margin-bottom: 10px;
+    background: none;
 }
 
-/* Estilos simples para títulos de videos */
+/* Hover y estado activo para botones colapsables */
+.c_collapsible:hover,
+.c_collapsible.active {
+    /* Agregar estilos si necesitas */
+}
 
+/* Contenido colapsable - oculto por defecto */
+.c_content {
+    padding: 0 18px;
+    display: none;
+    overflow: hidden;
+}
+
+/* ========================================
+   2. ESTILOS DE VIDEOS
+   ======================================== */
+
+/* Grid de videos responsive */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* Contenedor de video con aspect ratio 16:9 */
+.video-container {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    overflow: hidden;
+    background: #000;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+/* Iframe y video dentro del contenedor */
+.video-container iframe,
+.video-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Títulos de videos */
 .video-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -23,7 +78,7 @@
     text-align: center;
 }
 
-/* Opcional: Si quieres los títulos con un fondo sutil */
+/* Título alternativo con fondo */
 .video-title-bg {
     background: #f8f9fa;
     border-left: 3px solid #007bff;
@@ -34,266 +89,208 @@
     color: #495057;
 }
 
-/* Para mantener el espaciado en el contenedor de video */
-.video-container {
-    margin-bottom: 2rem;
-}
+/* ========================================
+   3. MODALES
+   ======================================== */
 
-.video-container iframe {
-    width: 100%;
-    height: 315px;
-    border-radius: 5px;
-}
-
-/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
-.active, .c_collapsible:hover {
-  
-}
-
-/* Style the collapsible content. Note: hidden by default */
-.c_content {
-  padding: 0 18px;
-  display: none;
-  overflow: hidden;
-  
-}
-
-.modal-btn{
-  cursor: pointer;
-}
-
-
-.a_custom{
-  background-color: #312450;
-  border-radius: 5px;
-  padding: 10px 15px 10px 15px;
-}
-
-.h_txt_content{
-  font-size: 16px;
-  color: #312450 !important;
-}
-
-.year{
-  color: #312450 !important;
-}
-
-/* ------------------------------------ */
-
+/* Overlay del modal */
 .modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
-  padding-top: 100px; /* Location of the box */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgb(0,0,0); /* Fallback color */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
 }
 
-/* Modal Content */
+/* Contenido del modal */
 .modal-content {
-  background-color: #fefefe;
-  margin: auto;
-  /* padding: 20px; */
-  border: 1px solid #888;
-  width: 80%;
-  padding: 15px 20px 15px 20px;
-  
-  text-align: justify;
+    background-color: #fefefe;
+    margin: auto;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 800px;
+    padding: 15px 20px;
+    text-align: justify;
+    font-size: 16px;
+    color: #535353;
 }
 
-/* The Close Button */
+/* Botón cerrar modal */
 .close {
-  color: #aaaaaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
 }
 
 .close:hover,
 .close:focus {
-  color: #000;
-  text-decoration: none;
-  cursor: pointer;
+    color: #000;
+    text-decoration: none;
 }
 
-/* ------------------------------------ */
+/* ========================================
+   4. BOTONES Y ELEMENTOS INTERACTIVOS
+   ======================================== */
 
-.btn_info{
-  cursor: pointer;
+.modal-btn,
+.btn_info {
+    cursor: pointer;
 }
 
-.txt_modal{
-  color: rgb(83, 83, 83);
-  font-size: 16px;
-  z-index: 2;
-  text-align: justify;
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
-  padding-right: 40px;
-  padding-left: 20px;
-  padding-top: 10px;
+/* ========================================
+   5. ELEMENTOS PERSONALIZADOS
+   ======================================== */
+
+/* Enlaces personalizados */
+.a_custom {
+    background-color: #312450;
+    border-radius: 5px;
+    padding: 10px 15px;
+    color: white;
+    text-decoration: none;
+    display: inline-block;
 }
 
-#sidebar{
-  z-index: 1;
+/* Texto de contenido */
+.h_txt_content {
+    font-size: 16px;
+    color: #312450 !important;
 }
 
-.modal-content{
-  font-size: 16px;
-  color: rgb(83, 83, 83);
+/* Años */
+.year {
+    color: #312450 !important;
 }
 
-.modal-content li{
-  font-weight: bold;
+/* Enlaces personalizados */
+.c_a {
+    color: #312450 !important;
+    text-decoration: underline;
 }
 
-.ccc{
-  margin-left: 6px;
+/* ========================================
+   6. TABLAS Y CONTENIDO
+   ======================================== */
+
+/* Tabla de contenido de procesos */
+.t_content_proc_mod {
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: auto;
+    margin-top: 20px;
 }
 
+/* Título de procesos */
+.tit_proc_mod {
+    font-size: 18px;
+    margin-left: 20px;
+}
 
+/* Tabla de alcance */
+#t_alcance tr td {
+    font-size: 16px !important;
+}
+
+/* ========================================
+   7. LAYOUT Y ESTRUCTURA
+   ======================================== */
+
+/* Footer */
+#footer {
+    margin: auto;
+    text-align: center !important;
+    padding-top: 26px;
+}
+
+/* Línea divisoria personalizada */
+.c_hr {
+    background-color: #aaa;
+    height: 1px;
+    width: 99%;
+    margin: 10px auto;
+}
+
+/* Contenedor de videos alternativo (3 columnas) */
 .container_vids {
-  display: grid; 
-  grid-template-columns: 1fr 1fr 1fr; 
-  grid-template-rows: 1fr 1fr; 
-  gap: 5px 5px; 
-  grid-template-areas: 
-    ". . ."
-    ". . ."; 
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 5px;
 }
 
-#t_alcance tr td{
-  font-size: 16px !important;
+/* ========================================
+   8. UTILIDADES
+   ======================================== */
+
+/* Texto justificado */
+.justif {
+    text-align: justify !important;
 }
 
-/* #t_alcance tr:nth-child(1){
-  background-color: #312450 !important;
-  border: none !important;
-
-} */
-
-.t_content_proc_mod{
-  border-collapse: collapse;
-  font-size: 14px;
-  
-  margin: auto;
-  margin-top: 20px;
+/* Fuente */
+.fuente {
+    font-weight: bold;
+    font-size: 14px;
+    color: black;
+    font-style: italic;
+    display: flex;
+    justify-content: flex-end;
 }
 
-.tit_proc_mod{
-  font-size: 18px;
-  margin-left: 20px;
+/* Texto modal */
+.txt_modal {
+    color: #535353;
+    font-size: 16px;
+    z-index: 2;
+    text-align: justify;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    padding: 10px 40px 10px 20px;
 }
 
-#three{
-  margin: auto;
-}
-
-.proc_mod{
-  border-radius: 0px;
-  
-}
-
-/* --------------------------------------- */
-.video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    .video-container {
-      position: relative;
-      padding-top: 56.25%; /* 16:9 Aspect Ratio */
-      overflow: hidden;
-      background: #000;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    .video-container iframe,
-    .video-container video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-/* --------------------------------------- */
-
-#footer{
-  margin: auto;
-  text-align: center !important;
-  padding-top: 26px;
-  
-}
-
-.c_hr{
-  background-color: rgb(170, 170, 170);
-  height: 1px;
-  width: 99%;
-  margin: auto;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-
-.c_a{
-  color: #312450 !important;
-  text-decoration: underline;
-}
-
-/* .content{
-  height: 400px !important;
-}
-
-.image{
-  height: 400px !important;
-}
-
-.seccc{
-  height: 400px !important;
-} */
+/* ========================================
+   9. RESPONSIVE DESIGN
+   ======================================== */
 
 @media screen and (max-width: 736px) {
-  #three > div > button{
-    font-size: 12px !important;
-    
-    padding-left: 20px !important;
-    padding-right: 10px !important;
-    width: 100% !important;
-    padding-bottom: 10px !important;
-  }
+    /* Botones en pantallas pequeñas */
+    #three > div > button {
+        font-size: 12px !important;
+        padding: 10px 10px 10px 20px !important;
+        width: 100% !important;
+    }
 
-  .c_collapsible{
-    
-    font-size: 12px;
-    white-space: normal;
-    height: auto;
-    line-height: 20px;
-    padding-top: 20px;
-  }
+    /* Colapsables en móviles */
+    .c_collapsible {
+        font-size: 12px;
+        white-space: normal;
+        height: auto;
+        line-height: 20px;
+        padding-top: 20px;
+    }
 
-}
+    /* Grid de videos en móviles */
+    .video-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
 
+    /* Modal en móviles */
+    .modal-content {
+        width: 95%;
+        padding: 10px 15px;
+    }
 
-.justif{
-  text-align: justify !important;
-}
-
-.fuente{
-  font-weight: bold;
-  font-size: 14px;
-  left: 50px;
-  color: black;
-  font-style: italic;
-  display: flex;
-  justify-content: flex-end
+    /* Contenedor de videos alternativo en móviles */
+    .container_vids {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
 }
