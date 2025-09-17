@@ -4,137 +4,85 @@
     <title>TDI | SkyTech Demo</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="assets/css/main.css" />
     <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
     <link rel="stylesheet" href="assets/css/custom.css" />
     <link rel="stylesheet" href="assets/css/historico.css" />
-    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
-    
-    <!-- CSS específico para videos - se puede mover a assets/css/videos.css -->
     <link rel="stylesheet" href="assets/css/videos.css" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
 </head>
 
 <body class="is-preload">
     <div id="wrapper">
         <section id="four" class="wrapper style1-alt fade-up">
-            <div class="training-section">
-                <h2 class="section-title">📹 Centro de Capacitaciones</h2>
+            <div class="videos-container">
+                <h2 class="videos-title">Videos de Capacitación</h2>
                 
-                <!-- Módulo 1: Demos SkyTech -->
-                <div class="module-container">
+                <!-- Módulo 1: DEMOS SkyTech By TD -->
+                <div class="module">
                     <button class="module-header" onclick="toggleModule(1)">
-                        <div>
-                            <span class="module-icon">▶</span>
-                            <span style="margin-left: 1rem;">DEMOS SkyTech By TD</span>
-                        </div>
-                        <div class="module-stats">
-                            <div class="stats-item">
-                                <span>📼</span>
-                                <span>2 videos</span>
-                            </div>
-                            <div class="stats-item">
-                                <span>⏱️</span>
-                                <span>~30 min</span>
-                            </div>
-                        </div>
+                        <span>DEMOS SkyTech By TD</span>
+                        <span class="module-arrow">▶</span>
                     </button>
                     <div class="module-content" id="module-1">
-                        <div class="video-grid">
-                            <div class="video-item">
-                                <div class="video-container">
-                                    <iframe src="https://player.vimeo.com/video/1118728986" 
-                                            frameborder="0" 
-                                            allow="autoplay; fullscreen;" 
-                                            title="DEMO SkyTech By TD Sep 2025">
-                                    </iframe>
-                                </div>
+                        <ul class="video-list">
+                            <li class="video-item" onclick="playVideo('https://player.vimeo.com/video/1118728986', 'Demo Completo SkyTech - Septiembre 2025')">
+                                <div class="video-icon">▶</div>
                                 <div class="video-info">
-                                    <h3 class="video-title">Demo Completo SkyTech - Septiembre 2025</h3>
-                                    <p class="video-description">
-                                        Demostración completa de las nuevas funcionalidades y características 
-                                        de SkyTech By TD. Incluye navegación por las diferentes secciones, 
-                                        nuevas herramientas y mejoras implementadas.
-                                    </p>
-                                    <div class="video-meta">
-                                        <span class="video-duration">~15 min</span>
-                                        <span class="video-date">Sept 2025</span>
-                                    </div>
+                                    <div class="video-title">Demo Completo SkyTech - Septiembre 2025</div>
+                                    <div class="video-meta">15 min • Sept 2025</div>
                                 </div>
-                            </div>
-
-                            <div class="video-item">
-                                <div class="video-container">
-                                    <iframe src="https://player.vimeo.com/video/1119461049" 
-                                            frameborder="0" 
-                                            allow="autoplay; fullscreen;" 
-                                            title="Toma de Turno por Voz">
-                                    </iframe>
-                                </div>
+                            </li>
+                            <li class="video-item" onclick="playVideo('https://player.vimeo.com/video/1119461049', 'Sistema de Toma de Turnos por Voz')">
+                                <div class="video-icon">▶</div>
                                 <div class="video-info">
-                                    <h3 class="video-title">Sistema de Toma de Turnos por Voz</h3>
-                                    <p class="video-description">
-                                        Tutorial paso a paso del nuevo sistema de toma de turnos activado 
-                                        por comando de voz. Aprende a configurar y utilizar esta 
-                                        funcionalidad innovadora.
-                                    </p>
-                                    <div class="video-meta">
-                                        <span class="video-duration">~12 min</span>
-                                        <span class="video-date">Sept 2025</span>
-                                    </div>
+                                    <div class="video-title">Sistema de Toma de Turnos por Voz</div>
+                                    <div class="video-meta">12 min • Sept 2025</div>
                                 </div>
-                            </div>
-                        </div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
                 <!-- Módulo 2: Tutoriales Básicos -->
-                <div class="module-container">
+                <div class="module">
                     <button class="module-header" onclick="toggleModule(2)">
-                        <div>
-                            <span class="module-icon">▶</span>
-                            <span style="margin-left: 1rem;">Tutoriales Básicos</span>
-                        </div>
-                        <div class="module-stats">
-                            <div class="stats-item">
-                                <span>📼</span>
-                                <span>0 videos</span>
-                            </div>
-                            <div class="stats-item">
-                                <span>⏱️</span>
-                                <span>Próximamente</span>
-                            </div>
-                        </div>
+                        <span>Tutoriales Básicos</span>
+                        <span class="module-arrow">▶</span>
                     </button>
                     <div class="module-content" id="module-2">
-                        <div style="text-align: center; padding: 2rem; color: #6c757d;">
-                            <p>📚 Esta sección estará disponible próximamente con tutoriales básicos del sistema.</p>
+                        <div style="padding: 20px; color: #666; font-size: 14px; text-align: center;">
+                            No hay contenido disponible
                         </div>
                     </div>
                 </div>
 
                 <!-- Módulo 3: Configuración Avanzada -->
-                <div class="module-container">
+                <div class="module">
                     <button class="module-header" onclick="toggleModule(3)">
-                        <div>
-                            <span class="module-icon">▶</span>
-                            <span style="margin-left: 1rem;">Configuración Avanzada</span>
-                        </div>
-                        <div class="module-stats">
-                            <div class="stats-item">
-                                <span>📼</span>
-                                <span>0 videos</span>
-                            </div>
-                            <div class="stats-item">
-                                <span>⏱️</span>
-                                <span>Próximamente</span>
-                            </div>
-                        </div>
+                        <span>Configuración Avanzada</span>
+                        <span class="module-arrow">▶</span>
                     </button>
                     <div class="module-content" id="module-3">
-                        <div style="text-align: center; padding: 2rem; color: #6c757d;">
-                            <p>⚙️ Aquí encontrarás videos sobre configuraciones avanzadas del sistema.</p>
+                        <div style="padding: 20px; color: #666; font-size: 14px; text-align: center;">
+                            No hay contenido disponible
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Modal para reproducir videos -->
+            <div class="modal" id="videoModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="modalTitle"></h3>
+                        <button class="close-btn" onclick="closeModal()">×</button>
+                    </div>
+                    <iframe class="modal-video" id="videoFrame" src="" allowfullscreen></iframe>
                 </div>
             </div>
         </section>
@@ -149,7 +97,7 @@
         </footer>
     </div>
 
-    <!-- Scripts -->
+    <!-- JavaScript -->
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/jquery.scrollex.min.js"></script>
     <script src="assets/js/jquery.scrolly.min.js"></script>
@@ -157,52 +105,6 @@
     <script src="assets/js/breakpoints.min.js"></script>
     <script src="assets/js/util.js"></script>
     <script src="assets/js/main.js"></script>
-
-    <script>
-        function toggleModule(moduleNumber) {
-            const header = event.currentTarget;
-            const content = document.getElementById('module-' + moduleNumber);
-            const icon = header.querySelector('.module-icon');
-            
-            // Toggle active state
-            header.classList.toggle('active');
-            content.classList.toggle('active');
-            
-            // Animate icon rotation
-            if (header.classList.contains('active')) {
-                icon.style.transform = 'rotate(90deg)';
-                content.style.display = 'block';
-            } else {
-                icon.style.transform = 'rotate(0deg)';
-                content.style.display = 'none';
-            }
-        }
-
-        // Close other modules when opening a new one (optional)
-        function toggleModuleExclusive(moduleNumber) {
-            // Close all modules first
-            const allHeaders = document.querySelectorAll('.module-header');
-            const allContents = document.querySelectorAll('.module-content');
-            
-            allHeaders.forEach(header => {
-                header.classList.remove('active');
-                header.querySelector('.module-icon').style.transform = 'rotate(0deg)';
-            });
-            
-            allContents.forEach(content => {
-                content.classList.remove('active');
-                content.style.display = 'none';
-            });
-            
-            // Open selected module
-            const selectedHeader = document.querySelector(`[onclick="toggleModuleExclusive(${moduleNumber})"]`);
-            const selectedContent = document.getElementById('module-' + moduleNumber);
-            
-            selectedHeader.classList.add('active');
-            selectedContent.classList.add('active');
-            selectedHeader.querySelector('.module-icon').style.transform = 'rotate(90deg)';
-            selectedContent.style.display = 'block';
-        }
-    </script>
+    <script src="assets/js/videos.js"></script>
 </body>
 </html>
