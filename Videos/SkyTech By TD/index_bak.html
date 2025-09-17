@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>TDI | SkyTech Demo</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+    <link rel="stylesheet" href="assets/css/custom.css" />
+    <link rel="stylesheet" href="assets/css/historico.css" />
+    <link rel="stylesheet" href="assets/css/videos.css" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
+</head>
+
+<body class="is-preload">
+    <div id="wrapper">
+        <section id="four" class="wrapper style1-alt fade-up">
+            <div class="videos-container">
+                <h2 class="videos-title">Videos de Capacitación</h2>
+                
+                <!-- Módulo 1: DEMOS SkyTech By TD -->
+                <div class="module">
+                    <button class="module-header" onclick="toggleModule(1)">
+                        <span>DEMOS SkyTech By TD</span>
+                        <span class="module-arrow">▶</span>
+                    </button>
+                    <div class="module-content" id="module-1">
+                        <ul class="video-list">
+                            <li class="video-item" onclick="playVideo('https://player.vimeo.com/video/1118728986', 'Demo Completo SkyTech - Septiembre 2025')">
+                                <div class="video-icon">▶</div>
+                                <div class="video-info">
+                                    <div class="video-title">Demo Completo SkyTech - Septiembre 2025</div>
+                                    <div class="video-meta">15 min • Sept 2025</div>
+                                </div>
+                            </li>
+                            <li class="video-item" onclick="playVideo('https://player.vimeo.com/video/1119461049', 'Sistema de Toma de Turnos por Voz')">
+                                <div class="video-icon">▶</div>
+                                <div class="video-info">
+                                    <div class="video-title">Sistema de Toma de Turnos por Voz</div>
+                                    <div class="video-meta">12 min • Sept 2025</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Módulo 2: Tutoriales Básicos -->
+                <div class="module">
+                    <button class="module-header" onclick="toggleModule(2)">
+                        <span>Tutoriales Básicos</span>
+                        <span class="module-arrow">▶</span>
+                    </button>
+                    <div class="module-content" id="module-2">
+                        <div style="padding: 20px; color: #666; font-size: 14px; text-align: center;">
+                            No hay contenido disponible
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Módulo 3: Configuración Avanzada -->
+                <div class="module">
+                    <button class="module-header" onclick="toggleModule(3)">
+                        <span>Configuración Avanzada</span>
+                        <span class="module-arrow">▶</span>
+                    </button>
+                    <div class="module-content" id="module-3">
+                        <div style="padding: 20px; color: #666; font-size: 14px; text-align: center;">
+                            No hay contenido disponible
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para reproducir videos -->
+            <div class="modal" id="videoModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="modalTitle"></h3>
+                        <button class="close-btn" onclick="closeModal()">×</button>
+                    </div>
+                    <iframe class="modal-video" id="videoFrame" src="" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="footer" class="">
+            <div class="inner">
+                <ul class="menu">
+                    <li>SkyTel | Transformación Digital e Implementaciones</li>
+                </ul>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.scrollex.min.js"></script>
+    <script src="assets/js/jquery.scrolly.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/videos.js"></script>
+</body>
+</html>
