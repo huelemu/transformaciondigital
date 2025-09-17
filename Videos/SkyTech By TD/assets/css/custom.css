@@ -15,7 +15,7 @@
     margin-bottom: 10px;
 }
 
-/* Estilo PowerBI para títulos colapsables - Más compacto y elegante */
+/* Estilo EXACTO de PowerBI para títulos colapsables */
 .collapsible {
     font-size: 14px;
     font-weight: 600;
@@ -29,16 +29,16 @@
     border: none;
     text-align: left;
     outline: none;
-    width: auto; /* No ocupa todo el ancho */
-    max-width: 400px; /* Límite de ancho */
+    width: auto; /* No ocupa todo el ancho como PowerBI */
+    max-width: none; /* Sin límite de ancho */
     transition: all 0.3s ease;
     position: relative;
+    display: inline-block; /* Para que no ocupe todo el ancho */
 }
 
 .collapsible:hover {
     background: #f8f9fa;
     border-left-color: #5a67d8;
-    transform: translateX(2px);
 }
 
 /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
