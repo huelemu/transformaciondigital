@@ -49,7 +49,7 @@ function obtenerDirectorios($directorio) {
 // Obtener listas de directorios para estadísticas
 $herramientas = obtenerDirectorios("herramientas");
 $procesos = obtenerDirectorios("procesos");
-$capacitaciones = obtenerDirectorios("capacitaciones");
+$capacitaciones = obtenerDirectorios("Videos");
 
 // Función para determinar el tipo de usuario
 function getTipoUsuario($domain) {
