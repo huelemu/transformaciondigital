@@ -1,0 +1,135 @@
+.logo{
+    /* background-color: red; */
+    height: 120px !important;
+    width: 120px !important;
+}
+
+#av_descripcion{
+    font-size: 16px !important;
+    text-transform: unset !important;
+    
+}
+
+.copyright{
+    text-transform: unset !important;
+}
+
+#av_logo{
+    height: 80px;
+    margin-top: 15px;
+}
+
+#mas_info{
+    font-size: 16px;
+    margin-top: -20px !important;
+}
+
+#cont_atributos{
+    display: flex;
+    flex-wrap: wrap;
+    margin: auto;
+    justify-content: center;
+    margin-top: -20px;
+    
+}
+
+.av_atributo{
+    
+    padding-top: 5px;
+    padding-bottom: 5px;
+    text-align: center;
+    width: 130px !important;
+    border-radius: 20px;
+    padding-left: 2px;
+    padding-right: 2px;
+    margin-right: 5px;
+    margin-top: 5px !important;
+    margin-bottom: 5px !important;
+    background-color: white;
+    font-size: 16px;
+    color: black;
+    font-weight: bold;
+}
+
+.img_cli{
+    height: 100px ;
+    border-radius: 5px;
+}
+
+#header > nav > ul > li> a{
+    height: 140px ;
+    padding-top: 20px;
+}
+
+
+@media only screen and (max-width: 430px) {
+    .av_atributo{
+        font-size: 12px;
+        width: 98px !important;
+        font-weight: normal;
+    }
+  }
+
+
+#wrapper{
+    padding-top: 20px !important;
+}
+
+.inner{
+    padding-top: 20px !important;
+    padding-bottom: 30px !important;
+}
+
+#titulo{
+    margin-top: -30px;
+}
+
+.c_bold{
+    font-weight: bold;
+}
+
+.art_cont p{
+    text-align: justify !important;
+}
+
+.btn_av_action{
+    width: 180px !important;
+    text-decoration: none !important;
+}
+
+.btn_llamar{
+    background-color: rgba(255, 255, 255, 0.445) !important;
+}
+
+/* #cont > button:nth-child(7){
+    background-color: rgba(255, 255, 255, 0.445) !important;
+    
+    
+} */
+
+.btn_av_action img{
+    height: 20px;
+    width: 20px;
+    
+    margin-bottom: -5px;
+}
+
+a{
+    text-decoration: none !important;
+    font-variant: normal !important;
+}
+
+/* ---------------------------------------- */
+#avs{
+    display: inline;
+}
+
+.av{
+    display: inline-flex;
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    
+}
+

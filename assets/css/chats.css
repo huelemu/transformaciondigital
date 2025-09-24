@@ -1,0 +1,10 @@
+#cont{
+    position: absolute;
+    top: 5%;
+    width: 90%;
+    text-align: center;
+}
+
+img{
+    border-radius: 5px;
+}
