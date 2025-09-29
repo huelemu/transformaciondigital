@@ -476,9 +476,9 @@ $tipo_usuario = getTipoUsuario($domain);
             
             <div class="stat-card">
                 <div class="stat-icon">📚</div>
-                <div class="stat-title">Videos</div>
+                <div class="stat-title">Temas Disponibles</div>
                 <div class="stat-value"><?= count($capacitaciones) ?></div>
-                <div class="stat-description">Temas disponibles</div>
+                <div class="stat-description">Videos dentro de cada tema</div>
             </div>
             
             <div class="stat-card">
