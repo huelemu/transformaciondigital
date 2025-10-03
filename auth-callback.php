@@ -12,6 +12,7 @@ define('GOOGLE_REDIRECT_URI', 'https://transformacion.skytel.tech/auth-callback.
 // Dominios permitidos
 $allowed_domains = [
     'skytel.tech',
+    'skytel.com.br', 
     'skytel.com.ar', 
     'skytel.com.uy',
     'skytel.com.py',

@@ -1,0 +1,66 @@
+<div id="vertex-widget" style="max-width:600px; margin:20px auto; font-family:Arial, sans-serif;">
+  <h2 style="color:green;">Asistente de Premedic</h2>
+  <input type="text" id="vertex-query" placeholder="Escribí tu consulta..." 
+         style="width: 100%; padding:10px; border:1px solid #ccc; border-radius:4px;">
+  <button id="vertex-search-btn" 
+          style="margin-top:10px; padding:10px 20px; background:green; color:white; border:none; border-radius:4px; cursor:pointer;">
+          Buscar
+  </button>
+  <div id="vertex-widget-results" style="margin-top:15px;"></div>
+</div>
+
+<script>
+async function doSearch() {
+  const q = document.getElementById('vertex-query').value.trim();
+  const resultsDiv = document.getElementById('vertex-widget-results');
+
+  if (!q) {
+    resultsDiv.innerHTML = '<p style="color:red;">Por favor ingresá algo para buscar.</p>';
+    return;
+  }
+
+  resultsDiv.innerHTML = '<p>Cargando...</p>';
+
+  try {
+    const resp = await fetch('widget_search.php?q=' + encodeURIComponent(q));
+    const data = await resp.json();
+
+    if (data.error) {
+      resultsDiv.innerHTML = '<p style="color:red;">' + data.error + '</p>';
+      return;
+    }
+
+    let answerHtml = '';
+    if (data.answer && data.answer.answerText) {
+      answerHtml += `<div style="padding:10px; border:1px solid #eee; margin-bottom:10px; border-radius:4px; background:#f0fff0;">
+                       <strong>Respuesta:</strong><br>${data.answer.answerText}
+                     </div>`;
+    }
+
+    if (data.answer && data.answer.citations && data.answer.citations.length) {
+      answerHtml += '<div><strong>Fuentes:</strong><br>';
+      data.answer.citations.forEach((c,i)=>{
+        answerHtml += `<div style="padding:5px 0; border-bottom:1px dashed #ccc;">
+                         ${i+1}. ${c.uri || 'Fuente interna'}<br>${c.snippet || ''}
+                       </div>`;
+      });
+      answerHtml += '</div>';
+    }
+
+    if (!answerHtml) answerHtml = '<p>No se encontraron resultados.</p>';
+    resultsDiv.innerHTML = answerHtml;
+
+  } catch(e) {
+    console.error(e);
+    resultsDiv.innerHTML = '<p style="color:red;">Error al ejecutar búsqueda.</p>';
+  }
+}
+
+// Buscar al hacer click
+document.getElementById('vertex-search-btn').addEventListener('click', doSearch);
+
+// Buscar al presionar Enter
+document.getElementById('vertex-query').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') doSearch();
+});
+</script>

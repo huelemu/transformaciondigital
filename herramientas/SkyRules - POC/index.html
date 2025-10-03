@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirección con iframe</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="miFrame"></iframe>
+
+  <script>
+    // URL de la web a la que querés redirigir
+    const url = "https://skyrules.skytel.tech";
+    document.getElementById("miFrame").src = url;
+  </script>
+</body>
+</html>
