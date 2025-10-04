@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyTel - Base de Conocimiento</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #cont {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 650px; /* Un poco más ancho para la info */
+        }
+        h1 {
+            color: #11580350; /*   */
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #5f6368;
+            margin-bottom: 25px;
+        }
+        /* El input es el elemento que se "clica" automáticamente */
+        #searchWidgetTrigger {
+            opacity: 0; /* Ocultamos el input ya que se abrirá automáticamente */
+            pointer-events: none; /* Evita interacciones accidentales */
+            height: 0;
+            width: 0;
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+        button {
+            background-color: #34a853; /* Verde de acción */
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2e8d47;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="cont">
+            <h1>Transformación Digitál - Base de Conocimiento Premedic</h1>
+            <p class="subtitle">Cargando el asistente de respuestas rápidas...</p>
+            
+            <img src="../../img/premedic.png" alt="Logo SkyTel" height="80">
+            <br>
+            
+            <input placeholder="" id="searchWidgetTrigger" />
+
+            <br>
+            <a href="https://transformacion.skytel.tech/">
+                <button>Volver al Portal</button> 
+            </a>
+        </div>
+    </div>
+
+<!-- Widget JavaScript bundle -->
+<script src="https://cloud.google.com/ai/gen-app-builder/client?hl=es_419"></script>
+
+  <!-- Search widget element is not visible by default -->
+<gen-search-widget
+  configId="c4f91b90-e667-4e8a-b4e8-c209fca2263c"
+  triggerId="searchWidgetTrigger">
+</gen-search-widget>
+
+    <script>
+        // Función que simula el clic en el elemento disparador
+        function openSearchWidget() {
+            const triggerElement = document.getElementById('searchWidgetTrigger');
+            if (triggerElement) {
+                // Simular un clic para abrir el modal del widget
+                triggerElement.click(); 
+            }
+        }
+
+        // Ejecutar la función después de que el DOM cargue y darle un margen
+        // de 500ms (0.5 segundos) para que el script de Google se inicialice.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Se usa setTimeout para esperar la inicialización del script externo de Google
+            setTimeout(openSearchWidget, 500); 
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
