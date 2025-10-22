@@ -421,7 +421,7 @@ function renderAlert($error_info, $domain = '') {
             <div class="domains-list">
                 <div>• skytel.tech</div>
                 <div>• skytel.com.ar</div>
-                <div>• skytel.com.ar</div>
+                <div>• skytel.com.br</div>
                 <div>• skytel.com.uy</div>
                 <div>• skytel.com.py</div>
                 <div>• skytel.com.es</div>
